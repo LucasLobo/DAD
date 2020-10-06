@@ -13,6 +13,7 @@ namespace Client
 
         private static void RegisterCommands()
         {
+            commandDispatcher.Register("wait", new WaitCommand());
         }
 
         private static void ExecuteCommands(List<string> lines)

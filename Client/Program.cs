@@ -8,6 +8,28 @@ namespace Client
 
     class Program
     {
+
+        static readonly CommandDispatcher commandDispatcher = new CommandDispatcher();
+
+        private static void RegisterCommands()
+        {
+        }
+
+        private static void ExecuteCommands(List<string> lines)
+        {
+            foreach (string line in lines)
+            {
+                List<string> splitLine = line.Split(' ').ToList();
+                string command = splitLine.ElementAt(0);
+                splitLine.RemoveAt(0);
+                List<string> arguments = splitLine;
+
+                Console.WriteLine(line);
+                commandDispatcher.Execute(command, arguments);
+                Console.WriteLine();
+            };
+        }
+
         static void Main(string[] args)
         {
             if (args.Length == 0)
@@ -35,10 +57,12 @@ namespace Client
                 return;
             }
 
+            RegisterCommands();
 
             try
             {
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
+                ExecuteCommands(preprocessed);
             }
             catch (PreprocessingException e)
             {

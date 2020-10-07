@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Client.Commands;
+using Client.Domain;
 
 namespace Client
 {
@@ -68,7 +69,25 @@ namespace Client
             catch (PreprocessingException e)
             {
                 Console.WriteLine(e.Message);
+                return;
             }
+
+            ConnectionManager connectionManager = new ConnectionManager();
+            connectionManager.PrintPartitions();
+
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-1"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-2"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-3"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-4"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-5"));
+
+
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-2"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-1"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-5", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-3", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-4"));
         }
     }
 }

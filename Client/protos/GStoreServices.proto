@@ -7,7 +7,6 @@ service GStoreService {
 	rpc Write (GStoreWriteRequest) returns (google.protobuf.Empty);
 	rpc ListServer (GStoreListServerRequest) returns (GStoreListServerReply);
 	rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
-	rpc Wait (GStoreWaitRequest) returns (google.protobuf.Empty);
 }
 
 message GStoreReadRequest {
@@ -37,8 +36,4 @@ message GStoreListServerReply {
 
 message GStoreListGlobalReply {
 	string object_identifiers = 1;
-}
-
-message GStoreWaitRequest {
-	int32 milliseconds = 1;
 }

@@ -14,7 +14,7 @@ namespace GStoreServer
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();
-            Console.WriteLine("ChatServer server listening on port " + Port);
+            Console.WriteLine("GStore server listening on port " + Port);
             Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
 

@@ -1,13 +1,13 @@
 ﻿syntax = "proto3";
 
+option csharp_namespace = "GStoreServiceClient";
+
 service GStoreService {
 	rpc Read (GStoreReadRequest) returns (GStoreReadReply);
 	rpc Write (GStoreWriteRequest) returns (google.protobuf.Empty);
 	rpc ListServer (GStoreListServerRequest) returns (GStoreListServerReply);
 	rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
 	rpc Wait (GStoreWaitRequest) returns (google.protobuf.Empty);
-	rpc BeginRepeat (GStoreBeginRepeatRequest) returns (google.protobuf.Empty);
-	rpc EndRepeat (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 message GStoreReadRequest {
@@ -41,8 +41,4 @@ message GStoreListGlobalReply {
 
 message GStoreWaitRequest {
 	int32 milliseconds = 1;
-}
-
-message GStoreBeginRepeatRequest {
-	int32 number_of_times = 1;
 }

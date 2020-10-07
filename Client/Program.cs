@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Client.Commands;
+using Client.Domain;
 
 namespace Client
 {
@@ -68,7 +69,31 @@ namespace Client
             catch (PreprocessingException e)
             {
                 Console.WriteLine(e.Message);
+                return;
             }
+
+            ConnectionManager connectionManager = new ConnectionManager();
+            connectionManager.PrintPartitions();
+
+            Console.WriteLine(connectionManager.ChooseServer("part-2", "s-2", true));
+
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", false));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", false));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", false));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", false));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", false));
+
+            /*Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", true));*/
+
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", true));
+            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", true));
         }
     }
 }

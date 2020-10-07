@@ -44,15 +44,10 @@ namespace Client.Domain
             }
         }
 
-        public string ChooseServer(string partitionId, string serverId, bool write)
-        {
 
-            partitionSet.TryGetValue(partitionId, out Partition partition);
-            if (partition == null)
-            {
-                // ERROR, should never happen
-                throw new ServerBindException("ERROR: Partition '" + partitionId + "' not found.");
-            }
+        public string ChooseServerForRead(string partitionId, string serverId)
+        {
+            Partition partition = getPartition(partitionId);
 
             // No server currently attached
             if (String.IsNullOrEmpty(attachedServerId))
@@ -61,49 +56,52 @@ namespace Client.Domain
                 {
                     throw new ServerBindException("Not attached to any server and no default server is provided.");
                 }
-                else if (write && partition.IsMaster(serverId) || !write && partition.Contains(serverId))
+                else if (!partition.Contains(serverId))
                 {
-                    attachedServerId = serverId;
+                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");  
                 }
                 else
                 {
-                    throw new ServerBindException("Server '" + serverId + "' is not a valid server for this operation (Partition: " + partitionId + " | write: " + write + ").");
-                }                
-            }
-
-            else if (write && !partition.IsMaster(attachedServerId))
-            {
-                if (serverId.Equals("-1"))
-                {
-                    throw new ServerBindException("Attached server '" + attachedServerId + "' is not master of the partition '" + partitionId + "' and no default server is provided.");
-                } 
-                else if (partition.IsMaster(serverId))
-                {
                     attachedServerId = serverId;
                 }
-                else
-                {
-                    throw new ServerBindException("Default server '" + serverId + "' is not master of partition '" + partitionId + "'.");
-                }
             }
 
-            else if (!write && !partition.Contains(attachedServerId))
+            else if (!partition.Contains(attachedServerId))
             {
                 if (serverId.Equals("-1"))
                 {
                     throw new ServerBindException("Attached server '" + attachedServerId + "' is not part of the partition '" + partitionId + "' and no default server is provided.");
                 }
-                else if (partition.Contains(serverId))
+                else if (!partition.Contains(serverId))
                 {
-                    attachedServerId = serverId;
+                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");
                 }
                 else
                 {
-                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");
+                    attachedServerId = serverId;
                 }
             }
 
             return attachedServerId;
+        }
+
+        public string ChooseServerForWrite(string partitionId)
+        {
+            Partition partition = getPartition(partitionId);
+
+            // should it attach itself?
+            // attachedServerId = partition.MasterId;
+            return partition.MasterId;
+        }
+
+        private Partition getPartition(string partitionId)
+        {
+            partitionSet.TryGetValue(partitionId, out Partition partition);
+            if (partition == null)
+            {
+                throw new ServerBindException("Partition '" + partitionId + "' not found.");
+            }
+            return partition;
         }
 
     }

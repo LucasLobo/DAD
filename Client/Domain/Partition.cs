@@ -9,7 +9,7 @@ namespace Client.Domain
 
         private readonly ISet<string> serverSet;
 
-        private string MasterId { get; }
+        public string MasterId { get; }
 
         public Partition(string partitionId, string masterId, ISet<string> serverSet)
         {

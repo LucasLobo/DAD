@@ -75,25 +75,19 @@ namespace Client
             ConnectionManager connectionManager = new ConnectionManager();
             connectionManager.PrintPartitions();
 
-            Console.WriteLine(connectionManager.ChooseServer("part-2", "s-2", true));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-1"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-2"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-3"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-4"));
+            Console.WriteLine(connectionManager.ChooseServerForWrite("part-5"));
 
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", false));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", false));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", false));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", false));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", false));
 
-            /*Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", true));*/
-
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-1", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-2", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-3", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-4", true));
-            Console.WriteLine(connectionManager.ChooseServer("part-1", "s-5", true));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-2"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-1"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-5", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-3", "s-5"));
+            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-4"));
         }
     }
 }

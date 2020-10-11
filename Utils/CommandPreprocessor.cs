@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Client.Commands
+namespace Utils
 {
-    static class CommandPreprocessor
+    public static class CommandPreprocessor
     {
         public static List<string> Preprocess(string[] lines)
         {

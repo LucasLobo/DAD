@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Client.Commands
+namespace Utils
 {
-    class CommandDispatcher
+    public class CommandDispatcher
     {
 
         private readonly Dictionary<string, Command> commandMap = new Dictionary<string, Command>();

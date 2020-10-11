@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Client.Commands;
 using Client.Domain;
+using Utils;
 
 namespace Client
 {
@@ -14,6 +15,10 @@ namespace Client
 
         private static void RegisterCommands()
         {
+            commandDispatcher.Register("read", new ReadCommand());
+            commandDispatcher.Register("write", new WriteCommand());
+            commandDispatcher.Register("listServer", new ListServerCommand());
+            commandDispatcher.Register("listGlobal", new ListGlobalCommand());
             commandDispatcher.Register("wait", new WaitCommand());
         }
 
@@ -87,7 +92,7 @@ namespace Client
             Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-5"));
             Console.WriteLine(connectionManager.ChooseServerForRead("part-5", "s-5"));
             Console.WriteLine(connectionManager.ChooseServerForRead("part-3", "s-5"));
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-4"));
+            //Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-4"));
         }
     }
 }

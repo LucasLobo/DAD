@@ -6,14 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Utils\Utils.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="protos\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
     <PackageReference Include="Grpc.Core" Version="2.32.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />

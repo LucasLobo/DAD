@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace GStoreServer
 
         private GStoreReadReply ExecuteRead(GStoreReadRequest request)
         {
-            Console.WriteLine($"Read request-> PartitionId: {request.PartitionId} ObjectId:{request.ObjectId} ServerId: {request.ServerId}");
+            Console.WriteLine($"Read request-> PartitionId: {request.PartitionId} ObjectId:{request.ObjectId}");
             return new GStoreReadReply
             {
                 ObjectValue = "Test"
@@ -44,11 +45,13 @@ namespace GStoreServer
 
         private GStoreListGlobalReply ExecuteListGlobal(Empty request)
         {
+            ObjectIdentifier objId1 = new ObjectIdentifier { PartitionId = "partitionId1", ObjectId = "objectId1" };
+            ObjectIdentifier objId2 = new ObjectIdentifier { PartitionId = "partitionId2", ObjectId = "objectId2" };
             Console.WriteLine("ListGlobal request");
-            return new GStoreListGlobalReply
-            {
-                ObjectIdentifiers = "Identifiers"
-            };
+            GStoreListGlobalReply reply = new GStoreListGlobalReply();
+            reply.ObjectIdentifiers.Add(objId1);
+            reply.ObjectIdentifiers.Add(objId2);
+            return reply;
         }
 
         public override Task<GStoreListServerReply> ListServer(GStoreListServerRequest request, ServerCallContext context)
@@ -58,12 +61,17 @@ namespace GStoreServer
 
         private GStoreListServerReply ExecuteListServer(GStoreListServerRequest request)
         {
+            ObjectIdentifier objId1 = new ObjectIdentifier { PartitionId = "partitionId1", ObjectId = "objectId1" };
+            ObjectIdentifier objId2 = new ObjectIdentifier { PartitionId = "partitionId2", ObjectId = "objectId2" };
+            Object obj1 = new Object { IsMasterReplica = true, ObjectIdentifier = objId1, Value = "value1" };
+            Object obj2 = new Object { IsMasterReplica = true, ObjectIdentifier = objId2, Value = "value2" };
+
             Console.WriteLine($"ListServer request-> ServerId:{request.ServerId}");
-            return new GStoreListServerReply
-            {
-                IsMasterReplica = true,
-                Objects = "Objects"
-            };
+
+            GStoreListServerReply reply = new GStoreListServerReply();
+            reply.Objects.Add(obj1);
+            reply.Objects.Add(obj2);
+            return reply;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace GStoreServer
 {
     class Program
     {
-        const int Port = 1001;
+        const int Port = 8081;
         static void Main(string[] args)
         {
             Server server = new Server

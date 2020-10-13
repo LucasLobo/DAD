@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Client.Commands;
-using Client.Domain;
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Net.Client;
 using Utils;
 
 namespace Client
@@ -37,7 +38,7 @@ namespace Client
             };
         }
 
-        static void Main(string[] args)
+        /*static void Main(string[] args)
         {
             if (args.Length == 0)
             {
@@ -93,6 +94,29 @@ namespace Client
             Console.WriteLine(connectionManager.ChooseServerForRead("part-5", "s-5"));
             Console.WriteLine(connectionManager.ChooseServerForRead("part-3", "s-5"));
             //Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-4"));
+        }*/
+
+        static void Main(string[] args)
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8081");
+            GStoreService.GStoreServiceClient client = new GStoreService.GStoreServiceClient(channel);
+
+            var reply = client.Read(new GStoreReadRequest { PartitionId = 1, ObjectId = 2});
+            Console.WriteLine("Read:" + reply.ObjectValue);
+
+            client.Write(new GStoreWriteRequest { PartitionId = 1, ObjectId = 2, ObjectValue = "value" });
+            Console.WriteLine("Write");
+
+            var reply3 = client.ListGlobal(new Empty());
+            Console.WriteLine("ListGlobal:\n"+reply3.ObjectIdentifiers.ToString());
+
+            var reply4 = client.ListServer(new Empty());
+            Console.WriteLine("ListServer:\n"+reply4.Objects.ToString());
+
+            Console.ReadKey();
+
         }
     }
 }

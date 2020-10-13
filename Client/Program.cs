@@ -5,7 +5,6 @@ using Client.Commands;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using Utils;
-using static GStoreService;
 
 namespace Client
 {
@@ -102,7 +101,7 @@ namespace Client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8081");
-            GStoreServiceClient client = new GStoreServiceClient(channel);
+            GStoreService.GStoreServiceClient client = new GStoreService.GStoreServiceClient(channel);
 
             var reply = client.Read(new GStoreReadRequest { PartitionId = 1, ObjectId = 2});
             Console.WriteLine("Read:" + reply.ObjectValue);

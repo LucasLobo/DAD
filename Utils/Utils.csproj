@@ -4,11 +4,4 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Update="protos\GStoreServices.proto">
-      <GrpcServices>Both</GrpcServices>
-    </None>
-    <Protobuf Include="protos\GStoreServices.proto" GrpcServices="Both" />
-  </ItemGroup>
-
 </Project>

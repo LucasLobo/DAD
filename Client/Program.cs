@@ -112,7 +112,7 @@ namespace Client
             var reply3 = client.ListGlobal(new Empty());
             Console.WriteLine("ListGlobal:\n"+reply3.ObjectIdentifiers.ToString());
 
-            var reply4 = client.ListServer(new GStoreListServerRequest { ServerId = 1});
+            var reply4 = client.ListServer(new Empty());
             Console.WriteLine("ListServer:\n"+reply4.Objects.ToString());
 
             Console.ReadKey();

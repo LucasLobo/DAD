@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using Grpc.Net.Client;
 
 namespace Client.Domain
 {
     class ConnectionManager
     {
+        private readonly IDictionary<string, Server> serverSet;
         private readonly IDictionary<string, Partition> partitionSet;
 
-        private string attachedServerId;
+        private Server attachedServer;
 
         public ConnectionManager()
         {
+            serverSet = new Dictionary<string, Server>();
             partitionSet = new Dictionary<string, Partition>();
             CreatePartitions();
         }
@@ -23,15 +26,31 @@ namespace Client.Domain
 
             for (int i = 1; i <= serverNumber; i++)
             {
-                ISet<string> serverSet = new HashSet<string>();
+                string serverId = "s-" + i;
+                int port = 8080 + i;
+                string address = "http://localhost:" + port;
+                GrpcChannel channel = GrpcChannel.ForAddress(address);
+                GStoreService.GStoreServiceClient client = new GStoreService.GStoreServiceClient(channel);
+                serverSet.Add(serverId, new Server(serverId, client));
+            }
+
+            for (int i = 1; i <= serverNumber; i++)
+            {
+                string masterId = "s-" + i;
+                Server master = serverSet[masterId];
+
+                ISet<Server> partitionServerSet = new HashSet<Server>();
 
                 for (int j = 0; j < partitionSize; j++)
                 {
-                    int serverId = (i + j - 1) % serverNumber + 1;
-                    serverSet.Add("s-" + serverId);
+                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
+                    Server server = serverSet[serverId];
+                    partitionServerSet.Add(server);
                 }
-                Partition partition = new Partition("part-" + i, "s-" + i, serverSet);
-                partitionSet.Add("part-" + i, partition);
+
+                string partitionId = "part-" + i;
+                Partition partition = new Partition(partitionId, master, partitionServerSet);
+                partitionSet.Add(partitionId, partition);
             }
         }
 
@@ -45,12 +64,12 @@ namespace Client.Domain
         }
 
 
-        public string ChooseServerForRead(string partitionId, string serverId)
+        public Server ChooseServerForRead(string partitionId, string serverId)
         {
             Partition partition = getPartition(partitionId);
 
             // No server currently attached
-            if (String.IsNullOrEmpty(attachedServerId))
+            if (attachedServer == null)
             {
                 if (serverId.Equals("-1"))
                 {
@@ -62,15 +81,15 @@ namespace Client.Domain
                 }
                 else
                 {
-                    attachedServerId = serverId;
+                    attachedServer = getServer(serverId);
                 }
             }
 
-            else if (!partition.Contains(attachedServerId))
+            else if (!partition.Contains(attachedServer.Id))
             {
                 if (serverId.Equals("-1"))
                 {
-                    throw new ServerBindException("Attached server '" + attachedServerId + "' is not part of the partition '" + partitionId + "' and no default server is provided.");
+                    throw new ServerBindException("Attached server '" + attachedServer.Id + "' is not part of the partition '" + partitionId + "' and no default server is provided.");
                 }
                 else if (!partition.Contains(serverId))
                 {
@@ -78,20 +97,20 @@ namespace Client.Domain
                 }
                 else
                 {
-                    attachedServerId = serverId;
+                    attachedServer = getServer(serverId);
                 }
             }
 
-            return attachedServerId;
+            return attachedServer;
         }
 
-        public string ChooseServerForWrite(string partitionId)
+        public Server ChooseServerForWrite(string partitionId)
         {
             Partition partition = getPartition(partitionId);
 
             // should it attach itself?
             // attachedServerId = partition.MasterId;
-            return partition.MasterId;
+            return partition.Master;
         }
 
         private Partition getPartition(string partitionId)
@@ -102,6 +121,17 @@ namespace Client.Domain
                 throw new ServerBindException("Partition '" + partitionId + "' not found.");
             }
             return partition;
+        }
+
+        private Server getServer(string serverId)
+        {
+            serverSet.TryGetValue(serverId, out Server server);
+            if (server == null)
+            {
+                throw new ServerBindException("Server '" + serverId + "' not found.");
+
+            }
+            return server;
         }
 
     }

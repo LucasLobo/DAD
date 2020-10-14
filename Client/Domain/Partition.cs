@@ -7,95 +7,72 @@ namespace Client.Domain
     {
         private string PartitionId { get; }
 
-        private readonly ISet<string> serverSet;
+        private readonly IDictionary<string, Server> serverSet;
 
-        public string MasterId { get; }
+        public Server Master { get; }
 
-        public Partition(string partitionId, string masterId, ISet<string> serverSet)
+        public Partition(string partitionId, Server master, ISet<Server> serverSet)
         {
-            ValidateParameters(partitionId, masterId, serverSet);
+            ValidateParameters(partitionId, master, serverSet);
 
             this.PartitionId = partitionId;
-            this.MasterId = masterId;
-            this.serverSet = serverSet;
+            this.Master = master;
+
+            this.serverSet = new Dictionary<string, Server>();
+            foreach (Server server in serverSet)
+            {
+                this.serverSet.Add(server.Id, server);
+            }
         }
 
         public bool Contains(string serverId)
         {
             if (String.IsNullOrEmpty(serverId)) return false;
-            return serverSet.Contains(serverId);
+            return serverSet.ContainsKey(serverId);
         }
 
         public bool IsMaster(string serverId)
         {
             if (String.IsNullOrEmpty(serverId)) return false;
-            return serverId.Equals(MasterId);
+            return serverId.Equals(Master.Id);
         }
 
         public void Print()
         {
             Console.WriteLine("PartitionId: " + PartitionId);
-            Console.WriteLine("MasterId: " + MasterId);
+            Console.WriteLine("MasterId: " + Master.Id);
             Console.Write("ServerSet: ");
-            foreach (string serverId in serverSet)
+
+            foreach (KeyValuePair<string, Server> entry in serverSet)
             {
-                Console.Write(serverId + " ");
+                Console.Write(entry.Key + " ");
+                Console.Write("\n");
+
             }
-            Console.Write("\n");
         }
 
-        private void ValidateParameters(string partitionId, string masterId, ISet<string> serverSet)
+        private void ValidateParameters(string partitionId, Server master, ISet<Server> serverSet)
         {
             if (String.IsNullOrEmpty(partitionId))
             {
-                throw new InvalidPartitionCreateArgumentsException("partitionId parameter can't be null or empty.");
+                throw new ArgumentException("partitionId parameter can't be null or empty.");
             }
 
-            if (String.IsNullOrEmpty(masterId))
+            if (master == null)
             {
-                throw new InvalidPartitionCreateArgumentsException("masterId parameter can't be null or empty.");
-
+                throw new ArgumentException("masterId parameter can't be null or empty.");
             }
 
             if (serverSet == null || serverSet.Count == 0)
             {
-                throw new InvalidPartitionCreateArgumentsException("serverSet parameter can't be null or empty.");
+                throw new ArgumentException("serverSet parameter can't be null or empty.");
             }
 
-            bool masterIsPresent = false;
-            foreach (string serverId in serverSet)
+            if (!serverSet.Contains(master))
             {
-                if (String.IsNullOrEmpty(serverId))
-                {
-                    throw new InvalidPartitionCreateArgumentsException("serverIds within serverSet parameter can't be null or empty.");
-                }
-
-                if (serverId.Equals(masterId))
-                {
-                    masterIsPresent = true;
-                }
-            }
-
-            if (!masterIsPresent)
-            {
-                throw new InvalidPartitionCreateArgumentsException("masterId must exist in serverSet parameter.");
+                throw new ArgumentException("masterId must exist in serverSet parameter.");
             }
         }
 
-    }
-
-    [Serializable]
-    public class InvalidPartitionCreateArgumentsException : Exception
-    {
-        public InvalidPartitionCreateArgumentsException()
-        { }
-
-        public InvalidPartitionCreateArgumentsException(string message)
-            : base(message)
-        { }
-
-        public InvalidPartitionCreateArgumentsException(string message, Exception innerException)
-            : base(message, innerException)
-        { }
     }
 }

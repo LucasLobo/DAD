@@ -9,5 +9,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>
-
+  <Protobuf Include="..\Utils\protos\PuppetMasterServerServices.proto" ProtoRoot=".." GrpcServices="Server" />
 </Project>

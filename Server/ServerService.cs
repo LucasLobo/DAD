@@ -40,10 +40,10 @@ namespace GStoreServer
 
         public override Task<GStoreListGlobalReply> ListGlobal(Empty request, ServerCallContext context)
         {
-            return Task.FromResult(ExecuteListGlobal(request));
+            return Task.FromResult(ExecuteListGlobal());
         }
 
-        private GStoreListGlobalReply ExecuteListGlobal(Empty request)
+        private GStoreListGlobalReply ExecuteListGlobal()
         {
             ObjectIdentifier objId1 = new ObjectIdentifier { PartitionId = "partitionId1", ObjectId = "objectId1" };
             ObjectIdentifier objId2 = new ObjectIdentifier { PartitionId = "partitionId2", ObjectId = "objectId2" };
@@ -54,19 +54,19 @@ namespace GStoreServer
             return reply;
         }
 
-        public override Task<GStoreListServerReply> ListServer(GStoreListServerRequest request, ServerCallContext context)
+        public override Task<GStoreListServerReply> ListServer(Empty request, ServerCallContext context)
         {
-            return Task.FromResult(ExecuteListServer(request));
+            return Task.FromResult(ExecuteListServer());
         }
 
-        private GStoreListServerReply ExecuteListServer(GStoreListServerRequest request)
+        private GStoreListServerReply ExecuteListServer()
         {
             ObjectIdentifier objId1 = new ObjectIdentifier { PartitionId = "partitionId1", ObjectId = "objectId1" };
             ObjectIdentifier objId2 = new ObjectIdentifier { PartitionId = "partitionId2", ObjectId = "objectId2" };
             Object obj1 = new Object { IsMasterReplica = true, ObjectIdentifier = objId1, Value = "value1" };
             Object obj2 = new Object { IsMasterReplica = true, ObjectIdentifier = objId2, Value = "value2" };
 
-            Console.WriteLine($"ListServer request-> ServerId:{request.ServerId}");
+            Console.WriteLine($"ListServer request");
 
             GStoreListServerReply reply = new GStoreListServerReply();
             reply.Objects.Add(obj1);

@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="..\Utils\protos\GStoreServices.proto" ProtoRoot=".." GrpcServices="Both" />
+    <Protobuf Include="..\Utils\protos\GStoreServices.proto" ProtoRoot=".." GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

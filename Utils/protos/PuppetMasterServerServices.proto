@@ -2,19 +2,7 @@
 import "google/protobuf/empty.proto";
 
 service PuppetMasterServerServices {
-	rpc Crash (CrashRequest) returns (google.protobuf.Empty);
-	rpc Freeze (FreezeRequest) returns (google.protobuf.Empty);
-	rpc Unfreeze (UnfreezeRequest) returns (google.protobuf.Empty);
-}
-
-message CrashRequest {
-	int32 server_id = 1;
-}
-
-message FreezeRequest {
-	int32 server_id = 1;
-}
-
-message Unfreeze {
-	int32 server_id = 1;
+	rpc Crash (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc Freeze (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc Unfreeze (google.protobuf.Empty) returns (google.protobuf.Empty);
 }

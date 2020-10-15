@@ -15,6 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <Protobuf Include="..\Utils\protos\PuppetMasterServerServices.proto" ProtoRoot=".." GrpcServices="Client" />
+    <Protobuf Include="..\Utils\protos\PuppetMasterPCSServices.proto" ProtoRoot=".." GrpcServices="Client" />
   </ItemGroup>
 
   <ItemGroup>

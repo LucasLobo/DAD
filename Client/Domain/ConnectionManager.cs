@@ -66,7 +66,7 @@ namespace Client.Domain
 
         public Server ChooseServerForRead(string partitionId, string serverId)
         {
-            Partition partition = getPartition(partitionId);
+            Partition partition = GetPartition(partitionId);
 
             // No server currently attached
             if (attachedServer == null)
@@ -81,7 +81,7 @@ namespace Client.Domain
                 }
                 else
                 {
-                    attachedServer = getServer(serverId);
+                    attachedServer = GetServer(serverId);
                 }
             }
 
@@ -97,7 +97,7 @@ namespace Client.Domain
                 }
                 else
                 {
-                    attachedServer = getServer(serverId);
+                    attachedServer = GetServer(serverId);
                 }
             }
 
@@ -106,14 +106,14 @@ namespace Client.Domain
 
         public Server ChooseServerForWrite(string partitionId)
         {
-            Partition partition = getPartition(partitionId);
+            Partition partition = GetPartition(partitionId);
 
             // should it attach itself?
             // attachedServerId = partition.MasterId;
             return partition.Master;
         }
 
-        private Partition getPartition(string partitionId)
+        private Partition GetPartition(string partitionId)
         {
             partitionSet.TryGetValue(partitionId, out Partition partition);
             if (partition == null)
@@ -123,7 +123,7 @@ namespace Client.Domain
             return partition;
         }
 
-        private Server getServer(string serverId)
+        public Server GetServer(string serverId)
         {
             serverSet.TryGetValue(serverId, out Server server);
             if (server == null)

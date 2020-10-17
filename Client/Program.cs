@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Client.Commands;
 using Client.Domain;
 using Google.Protobuf.WellKnownTypes;
@@ -14,31 +15,16 @@ namespace Client
 
         static readonly CommandDispatcher commandDispatcher = new CommandDispatcher();
 
-        private static void RegisterCommands()
+        private static void RegisterCommands(ConnectionManager connectionManager)
         {
-            commandDispatcher.Register("read", new ReadCommand());
-            commandDispatcher.Register("write", new WriteCommand());
-            commandDispatcher.Register("listServer", new ListServerCommand());
-            commandDispatcher.Register("listGlobal", new ListGlobalCommand());
+            commandDispatcher.Register("read", new ReadCommand(connectionManager));
+            commandDispatcher.Register("write", new WriteCommand(connectionManager));
+            commandDispatcher.Register("listServer", new ListServerCommand(connectionManager));
+            commandDispatcher.Register("listGlobal", new ListGlobalCommand(connectionManager));
             commandDispatcher.Register("wait", new WaitCommand());
         }
 
-        private static void ExecuteCommands(List<string> lines)
-        {
-            foreach (string line in lines)
-            {
-                List<string> splitLine = line.Split(' ').ToList();
-                string command = splitLine.ElementAt(0);
-                splitLine.RemoveAt(0);
-                List<string> arguments = splitLine;
-
-                Console.WriteLine(line);
-                commandDispatcher.Execute(command, arguments);
-                Console.WriteLine();
-            };
-        }
-
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -67,12 +53,25 @@ namespace Client
                 return;
             }
 
-            RegisterCommands();
+            ConnectionManager connectionManager = new ConnectionManager();
+            connectionManager.PrintPartitions();
+            Console.WriteLine();
+            Console.WriteLine();
+
+            RegisterCommands(connectionManager);
 
             try
             {
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
-                ExecuteCommands(preprocessed);
+                Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
+
+                for (int i = 0; i < 25; i++)
+                {
+                    Console.WriteLine("---");
+                    await Task.Delay(500);
+                }
+
+                await dispatcher;
             }
             catch (PreprocessingException e)
             {
@@ -80,9 +79,12 @@ namespace Client
                 return;
             }
 
-            ConnectionManager connectionManager = new ConnectionManager();
-            connectionManager.PrintPartitions();
+            //Testing();
+        }
 
+        public static void Testing(ConnectionManager connectionManager)
+        {
+            
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-1").Id);
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-2").Id);
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-3").Id);

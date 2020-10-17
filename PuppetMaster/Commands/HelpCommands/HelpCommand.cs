@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utils;
 
@@ -8,16 +9,15 @@ namespace PuppetMaster.Commands
 {
     class HelpCommand : Command
     {
-         private TextBox txtBoxOutput;
-         public HelpCommand(TextBox output)
-         {
+        private TextBox txtBoxOutput;
+        public HelpCommand(TextBox output) : base(false)
+        {
             this.txtBoxOutput = output;
          }
 
         public static int EXPECTED_ARGUMENTS = 0;
-        public override void Execute(List<string> arguments)
+        public override async Task ExecuteAsync(List<string> arguments)
         {
-            StringBuilder stringBuilder = new StringBuilder();
 
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
@@ -25,10 +25,10 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            printHelpCommands();
+            PrintHelpCommands();
         }
 
-        private void printHelpCommands()
+        private void PrintHelpCommands()
         {
             this.txtBoxOutput.AppendText(
                     Environment.NewLine + "Possible Commands for PCSs:" +

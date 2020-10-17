@@ -8,34 +8,35 @@ service GStoreService {
 	rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
 }
 
-message GStoreReadRequest {
-	int32 partition_id = 1;
-	int32 object_id = 2;
-}
-
-message GStoreReadReply {
-	string object_value = 1;
-}
-
-message GStoreWriteRequest {
-	int32 partition_id = 1;
-	int32 object_id = 2;
-	string object_value = 3;
-}
-
-message GStoreListServerReply {
-	repeated Object objects = 1;
+message ObjectIdentifier {
+	string partition_id = 1;
+	string object_id = 2;
 }
 
 message Object {
 	ObjectIdentifier object_identifier = 1;
 	string value = 2;
-	bool is_master_replica = 3;
 }
 
-message ObjectIdentifier {
-	string partition_id = 1;
-	string object_id = 2;
+message ObjectReplica {
+	Object object = 1;
+	bool is_master_replica = 2;
+}
+
+message GStoreReadRequest {
+	ObjectIdentifier object_identifier = 1;
+}
+
+message GStoreReadReply {
+	Object object = 1;
+}
+
+message GStoreWriteRequest {
+	Object object = 1;
+}
+
+message GStoreListServerReply {
+	repeated ObjectReplica object_replicas = 1;
 }
 
 message GStoreListGlobalReply {

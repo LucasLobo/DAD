@@ -1,7 +1,5 @@
-﻿using PuppetMaster.Commands;
+using PuppetMaster.Commands;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 using Utils;
 
@@ -33,23 +31,30 @@ namespace PuppetMaster
             //TODO
         }
 
-        private void btnRunCommand_Click(object sender, EventArgs e)
+        private async void btnRunCommand_Click(object sender, EventArgs e)
         {
-            string[] inputLine = { txtBoxCommand.Text.ToLower() };
+            string inputLine = txtBoxCommand.Text.ToLower();
+            if (String.IsNullOrEmpty(inputLine)) return;
 
+            // clean the command textbox
+            txtBoxCommand.ReadOnly = true;
+            txtBoxCommand.Clear();
+            bool isConcurrent;
             try
             {
-                List<string> preprocessed = CommandPreprocessor.Preprocess(inputLine);
-                ExecuteCommands(preprocessed);
+                isConcurrent = commandDispatcher.IsConcurrent(inputLine);
+                if (isConcurrent) txtBoxCommand.ReadOnly = false;
+                await commandDispatcher.ExecuteAsync(inputLine);
             }
             catch (PreprocessingException exception)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
                 return;
             }
-
-            // clean the command textbox
-            txtBoxCommand.Clear();
+            finally
+            {
+                txtBoxCommand.ReadOnly = false;
+            }
         }
 
         private void RegisterCommands()
@@ -69,21 +74,6 @@ namespace PuppetMaster
             commandDispatcher.Register("help", new HelpCommand(txtBoxOutput));
             commandDispatcher.Register("clear", new ClearCommand(txtBoxOutput));
             commandDispatcher.Register("quit", new QuitCommand(txtBoxOutput));
-        }
-
-        private static void ExecuteCommands(List<string> lines)
-        {
-            foreach (string line in lines)
-            {
-                List<string> splitLine = line.Split(' ').ToList();
-                string command = splitLine.ElementAt(0);
-                splitLine.RemoveAt(0);
-                List<string> arguments = splitLine;
-
-                Console.WriteLine(line);
-                commandDispatcher.Execute(command, arguments);
-                Console.WriteLine();
-            };
         }
     }
 }

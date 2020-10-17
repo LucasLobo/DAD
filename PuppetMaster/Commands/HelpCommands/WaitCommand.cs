@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
 using System.Linq;
 using Utils;
 
@@ -10,13 +10,13 @@ namespace PuppetMaster.Commands
     class WaitCommand : Command
     {
         private TextBox txtBoxOutput;
-        public WaitCommand(TextBox output)
+        public WaitCommand(TextBox output) : base(false)
         {
             this.txtBoxOutput = output;
         }
 
         public static int EXPECTED_ARGUMENTS = 1;
-        public override void Execute(List<string> arguments)
+        public override async Task ExecuteAsync(List<string> arguments)
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
@@ -26,16 +26,16 @@ namespace PuppetMaster.Commands
 
             try
             {
-                int milliseconds = Int32.Parse(arguments.ElementAt(0));
+                int sleep = Int32.Parse(arguments.ElementAt(0));
                 this.txtBoxOutput.AppendText(Environment.NewLine + "Sleeping...");
-                Thread.Sleep(milliseconds);
+                await Task.Delay(sleep);
+                this.txtBoxOutput.AppendText(Environment.NewLine + "Waking up...");
             }
             catch (FormatException)
             {
                 this.txtBoxOutput.AppendText(Environment.NewLine + "Argument must be of type int.");
                 return;
             }
-
         }
     }
 }

@@ -46,9 +46,8 @@ namespace Client.Domain
             foreach (KeyValuePair<string, Server> entry in serverSet)
             {
                 Console.Write(entry.Key + " ");
-                Console.Write("\n");
-
             }
+            Console.Write("\n");
         }
 
         private void ValidateParameters(string partitionId, Server master, ISet<Server> serverSet)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Grpc.Net.Client;
 
@@ -77,7 +77,7 @@ namespace Client.Domain
                 }
                 else if (!partition.Contains(serverId))
                 {
-                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");  
+                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");
                 }
                 else
                 {

@@ -13,7 +13,7 @@ namespace PuppetMaster.Commands
         public HelpCommand(TextBox output) : base(false)
         {
             this.txtBoxOutput = output;
-         }
+        }
 
         public static int EXPECTED_ARGUMENTS = 0;
         public override async Task ExecuteAsync(List<string> arguments)
@@ -32,15 +32,15 @@ namespace PuppetMaster.Commands
         {
             this.txtBoxOutput.AppendText(
                     Environment.NewLine + "Possible Commands for PCSs:" +
-                    Environment.NewLine + "1. replicationfactor r" + 
-                    Environment.NewLine + "2. server server_id URL min_delay max_delay" + 
-                    Environment.NewLine + "3. partition r partition_name server_id_1 (...) server_id_r" + 
-                    Environment.NewLine + "4. client username client_URL script_file" + 
-                    Environment.NewLine + "5. status" + 
-                    Environment.NewLine + "6. crash server_id" + 
-                    Environment.NewLine + "7. freeze server_id" + 
-                    Environment.NewLine + "8. unfreeze server_id" + 
-                    Environment.NewLine + "9. clear" + 
+                    Environment.NewLine + "1. replicationfactor r" +
+                    Environment.NewLine + "2. server server_id URL min_delay max_delay" +
+                    Environment.NewLine + "3. partition r partition_name server_id_1 (...) server_id_r" +
+                    Environment.NewLine + "4. client username client_URL script_file" +
+                    Environment.NewLine + "5. status" +
+                    Environment.NewLine + "6. crash server_id" +
+                    Environment.NewLine + "7. freeze server_id" +
+                    Environment.NewLine + "8. unfreeze server_id" +
+                    Environment.NewLine + "9. clear" +
                     Environment.NewLine + "10. quit"
                 );
         }

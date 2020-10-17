@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Client.Commands;
 using Client.Domain;
@@ -46,7 +45,8 @@ namespace Client
             try
             {
                 lines = System.IO.File.ReadAllLines(filename);
-            } catch (System.IO.FileNotFoundException e)
+            }
+            catch (System.IO.FileNotFoundException e)
             {
                 Console.WriteLine("ERROR: File " + filename + " not found in current directory.");
                 Console.WriteLine(e);
@@ -84,7 +84,7 @@ namespace Client
 
         public static void Testing(ConnectionManager connectionManager)
         {
-            
+
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-1").Id);
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-2").Id);
             Console.WriteLine(connectionManager.ChooseServerForWrite("part-3").Id);

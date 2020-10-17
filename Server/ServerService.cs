@@ -11,7 +11,7 @@ namespace GStoreServer
     class ServerService : GStoreService.GStoreServiceBase
     {
 
-        public ServerService () { }
+        public ServerService() { }
 
         public override Task<GStoreReadReply> Read(GStoreReadRequest request, ServerCallContext context)
         {

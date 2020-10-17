@@ -19,7 +19,7 @@ namespace PuppetMaster.Commands
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine +  "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
 

@@ -10,8 +10,8 @@ namespace Client.Domain
 
         public Server(string id, GStoreService.GStoreServiceClient client)
         {
-            this.Id = id ?? throw new ArgumentNullException("Server Id cannot be null.");
-            this.Stub = client ?? throw new ArgumentNullException("Client cannot be null.");
+            Id = id ?? throw new ArgumentNullException("Server Id cannot be null.");
+            Stub = client ?? throw new ArgumentNullException("Client cannot be null.");
         }
     }
 }

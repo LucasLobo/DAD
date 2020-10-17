@@ -1,4 +1,4 @@
-﻿using Client.Domain;
+using Client.Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +29,7 @@ namespace Client.Commands
             string serverId = arguments.ElementAt(0);
 
             Console.WriteLine($"List Server: {serverId}");
-            
+
             try
             {
                 Server server;
@@ -44,7 +44,7 @@ namespace Client.Commands
             catch (ServerBindException e)
             {
                 Console.WriteLine($"ERROR: {e.Message}");
-            }            
+            }
         }
     }
 }

@@ -28,11 +28,6 @@ namespace Utils
             {
                 throw new ArgumentException("identifier parameter can't be null");
             }
-
-            if (string.IsNullOrEmpty(identifier.ObjectId) || string.IsNullOrEmpty(identifier.PartitionId))
-            {
-                throw new ArgumentException("object identifier parameters can't be null or empty.");
-            }
         }
 
     }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Utils
 {
-    class GStoreObject
+    public class GStoreObject
     {
         public GStoreObjectIdentifier Identifier { get; }
         public string Value { get; }
@@ -28,6 +28,11 @@ namespace Utils
             {
                 throw new ArgumentException("identifier parameter can't be null");
             }
+        }
+
+        public override string ToString()
+        {
+            return Value;
         }
 
     }

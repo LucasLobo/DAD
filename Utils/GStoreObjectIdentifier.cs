@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Collections.Concurrent;
 
 namespace Utils
 {
-    class GStoreObjectIdentifier
+    public class GStoreObjectIdentifier
     {
         public string PartitionId { get; }
         public string ObjectId { get; }
@@ -29,6 +30,11 @@ namespace Utils
                 throw new ArgumentException("object_id parameter can't be null or empty.");
             }
 
+        }
+
+        public override string ToString()
+        {
+            return "(" + PartitionId + "," + ObjectId + ")";
         }
     }
 }

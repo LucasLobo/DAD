@@ -14,26 +14,26 @@ namespace GStoreServer
             DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>(comparer);
         }
 
-        public bool AddObject(GStoreObject gstore_object)
+        public bool AddObject(GStoreObject gStoreObject)
         {
-            return DataStore.TryAdd(gstore_object.Identifier, gstore_object);
+            return DataStore.TryAdd(gStoreObject.Identifier, gStoreObject);
         }
 
-        public bool UpdateObject(GStoreObject gstore_object)
+        public bool UpdateObject(GStoreObject gStoreObject)
         {
-            if (DataStore.ContainsKey(gstore_object.Identifier))
+            if (DataStore.ContainsKey(gStoreObject.Identifier))
             {
-                DataStore[gstore_object.Identifier] = gstore_object;
+                DataStore[gStoreObject.Identifier] = gStoreObject;
                 return true;
             }
             return false;
         }
 
-        public string ReadValue(GStoreObjectIdentifier identifier)
+        public GStoreObject Read(GStoreObjectIdentifier identifier)
         {
             if (DataStore.TryGetValue(identifier, out GStoreObject obj))
             {
-                return obj.Value;
+                return obj;
             }
             return null;
         }

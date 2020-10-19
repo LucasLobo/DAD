@@ -1,4 +1,6 @@
+using Client.Controllers;
 using Client.Domain;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +13,7 @@ namespace Client.Commands
     {
         public static int EXPECTED_ARGUMENTS = 3;
 
-        private ConnectionManager ConnectionManager;
+        private readonly ConnectionManager ConnectionManager;
 
         public ReadCommand(ConnectionManager connectionManager) : base(false)
         {
@@ -26,31 +28,23 @@ namespace Client.Commands
                 return;
             }
 
-            String partitionId = arguments.ElementAt(0);
-            String objectId = arguments.ElementAt(1);
-            String serverId = arguments.ElementAt(2);
+            string partitionId = arguments.ElementAt(0);
+            string objectId = arguments.ElementAt(1);
+            string serverId = arguments.ElementAt(2);
 
             try
             {
-                Server server = ConnectionManager.ChooseServerForRead(partitionId, serverId);
-
-                GStoreReadRequest gStoreReadRequest = new GStoreReadRequest()
-                {
-                    ObjectIdentifier = new DataObjectIdentifier
-                    {
-                        PartitionId = partitionId,
-                        ObjectId = objectId
-                    }
-                };
-
                 Console.WriteLine($"Read... {partitionId} {objectId} {serverId}");
-                GStoreReadReply gStoreReadReply = await server.Stub.ReadAsync(gStoreReadRequest);
-
-                Console.WriteLine($"PartitionId: {gStoreReadReply.Object.ObjectIdentifier.PartitionId} | ObjectId: {gStoreReadReply.Object.ObjectIdentifier.ObjectId} | Value: {gStoreReadReply.Object.Value}");
+                GStoreObject gstoreObject = await ReadController.Execute(ConnectionManager, partitionId, serverId, objectId);
+                Console.WriteLine($"PartitionId: {gstoreObject.Identifier.PartitionId} | ObjectId: {gstoreObject.Identifier.ObjectId} | Value: {gstoreObject.Value}");
             }
             catch (ServerBindException e)
             {
                 Console.WriteLine($"ERROR: {e.Message}");
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
+            {
+                Console.WriteLine($"Could not establish connection with server.");
             }
         }
     }

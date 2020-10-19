@@ -1,3 +1,4 @@
+using Client.Controllers;
 using Client.Domain;
 using System;
 using System.Collections.Generic;
@@ -32,13 +33,11 @@ namespace Client.Commands
 
             try
             {
-                Server server;
-                server = ConnectionManager.GetServer(serverId);
-                GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
-                foreach (DataObjectReplica replica in gStoreListServerReply.ObjectReplicas)
+
+                HashSet<GStoreObjectReplica> gStoreObjectReplicas = await ListServerController.Execute(ConnectionManager, serverId);
+                foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
                 {
-                    Console.WriteLine($"Partition: {replica.Object.ObjectIdentifier.PartitionId} | Server: {replica.Object.ObjectIdentifier.PartitionId} " +
-                        $"| Master: {replica.IsMasterReplica} | Value: {replica.Object.Value}");
+                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {replica.IsMaster}");
                 }
             }
             catch (ServerBindException e)

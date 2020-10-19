@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Grpc.Net.Client;
 
 namespace Client.Domain
@@ -62,7 +63,6 @@ namespace Client.Domain
                 Console.WriteLine();
             }
         }
-
 
         public Server ChooseServerForRead(string partitionId, string serverId)
         {
@@ -132,6 +132,11 @@ namespace Client.Domain
 
             }
             return server;
+        }
+
+        public List<Server> GetServers()
+        {
+            return serverSet.Values.ToList();
         }
 
     }

@@ -4,14 +4,13 @@ using Utils;
 
 namespace GStoreServer
 {
-    class GStoreServer
+    class GStore
     {
         private ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject> DataStore { get; }
 
-        public GStoreServer()
+        public GStore()
         {
-            GStoreObjectComparer comparer = new GStoreObjectComparer();
-            DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>(comparer);
+            DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>();
         }
 
         public bool AddObject(GStoreObject gStoreObject)
@@ -42,7 +41,7 @@ namespace GStoreServer
         {
             foreach (var item in DataStore)
             {
-                Console.WriteLine(item.Key + "-" + item.Value);
+                Console.WriteLine(item.Value);
             }
         }
     }

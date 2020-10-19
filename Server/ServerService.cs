@@ -1,9 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GStoreServer
@@ -23,7 +20,7 @@ namespace GStoreServer
             Console.WriteLine($"Read request -> PartitionId: {request.ObjectIdentifier.PartitionId} ObjectId: {request.ObjectIdentifier.ObjectId}");
             return new GStoreReadReply
             {
-                Object = ObjectBuilder.FromObjectIdentifier(request.ObjectIdentifier, "Value")
+                Object = DataObjectBuilder.FromObjectIdentifier(request.ObjectIdentifier, "Value")
             };
         }
 
@@ -46,11 +43,15 @@ namespace GStoreServer
         private GStoreListGlobalReply ExecuteListGlobal()
         {
             Console.WriteLine("ListGlobal request");
-            ObjectIdentifier objId1 = ObjectIdentifierBulder.FromString("partitionId1", "objectId1");
-            ObjectIdentifier objId2 = ObjectIdentifierBulder.FromString("partitionId2", "objectId2");
+            DataObjectIdentifier objId1 = DataObjectIdentifierBuilder.FromString("partitionId1", "objectId1");
+            DataObjectIdentifier objId21 = DataObjectIdentifierBuilder.FromString("partitionId2", "objectId2");
+            DataObjectIdentifier objId22 = DataObjectIdentifierBuilder.FromString("partitionId2", "objectId2");
+            DataObjectIdentifier objId3 = DataObjectIdentifierBuilder.FromString("partitionId3", "objectId3");
             GStoreListGlobalReply reply = new GStoreListGlobalReply();
             reply.ObjectIdentifiers.Add(objId1);
-            reply.ObjectIdentifiers.Add(objId2);
+            reply.ObjectIdentifiers.Add(objId21);
+            reply.ObjectIdentifiers.Add(objId22);
+            reply.ObjectIdentifiers.Add(objId3);
             return reply;
         }
 
@@ -63,20 +64,24 @@ namespace GStoreServer
         {
             Console.WriteLine($"ListServer request");
 
-            ObjectReplica objectReplica1 = ObjectReplicaBuilder.FromString("partitionId1", "serverId1", "value1", true);
-            ObjectReplica objectReplica2 = ObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value2", false);
+            DataObjectReplica objectReplica1 = DataObjectReplicaBuilder.FromString("partitionId1", "serverId1", "value1", true);
+            DataObjectReplica objectReplica21 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value2", false);
+            DataObjectReplica objectReplica22 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value2", true);
+            DataObjectReplica objectReplica23 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value3", true);
 
             GStoreListServerReply reply = new GStoreListServerReply();
             reply.ObjectReplicas.Add(objectReplica1);
-            reply.ObjectReplicas.Add(objectReplica2);
+            reply.ObjectReplicas.Add(objectReplica21);
+            reply.ObjectReplicas.Add(objectReplica22);
+            reply.ObjectReplicas.Add(objectReplica23);
             return reply;
         }
 
-        class ObjectIdentifierBulder
+        class DataObjectIdentifierBuilder
         {
-            internal static ObjectIdentifier FromString(string partitionId, string objectId)
+            internal static DataObjectIdentifier FromString(string partitionId, string objectId)
             {
-                return new ObjectIdentifier
+                return new DataObjectIdentifier
                 {
                     PartitionId = partitionId,
                     ObjectId = objectId
@@ -84,21 +89,21 @@ namespace GStoreServer
             }
         }
 
-        class ObjectBuilder
+        class DataObjectBuilder
         {
 
-            internal static Object FromString(String partitionId, string objectId, string value)
+            internal static DataObject FromString(String partitionId, string objectId, string value)
             {
-                return new Object
+                return new DataObject
                 {
-                    ObjectIdentifier = ObjectIdentifierBulder.FromString(partitionId, objectId),
+                    ObjectIdentifier = DataObjectIdentifierBuilder.FromString(partitionId, objectId),
                     Value = value
                 };
             }
 
-            internal static Object FromObjectIdentifier(ObjectIdentifier objectIdentifier, string value)
+            internal static DataObject FromObjectIdentifier(DataObjectIdentifier objectIdentifier, string value)
             {
-                return new Object
+                return new DataObject
                 {
                     ObjectIdentifier = objectIdentifier,
                     Value = value
@@ -107,13 +112,13 @@ namespace GStoreServer
 
         }
 
-        class ObjectReplicaBuilder
+        class DataObjectReplicaBuilder
         {
-            internal static ObjectReplica FromString(string partitionId, string objectId, string value, bool isMasterReplica)
+            internal static DataObjectReplica FromString(string partitionId, string objectId, string value, bool isMasterReplica)
             {
-                return new ObjectReplica
+                return new DataObjectReplica
                 {
-                    Object = ObjectBuilder.FromString(partitionId, objectId, value),
+                    Object = DataObjectBuilder.FromString(partitionId, objectId, value),
                     IsMasterReplica = isMasterReplica
                 };
             }

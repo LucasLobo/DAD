@@ -1,4 +1,4 @@
-﻿using Client.Domain;
+using Client.Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +36,7 @@ namespace Client.Commands
 
                 GStoreReadRequest gStoreReadRequest = new GStoreReadRequest()
                 {
-                    ObjectIdentifier = new ObjectIdentifier
+                    ObjectIdentifier = new DataObjectIdentifier
                     {
                         PartitionId = partitionId,
                         ObjectId = objectId

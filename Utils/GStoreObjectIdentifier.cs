@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Utils
 {
@@ -23,21 +19,21 @@ namespace Utils
         {
             if (string.IsNullOrEmpty(partitionId))
             {
-                throw new ArgumentException("partition_id parameter can't be null or empty.");
+                throw new ArgumentException("partitionId parameter can't be null or empty.");
             }
 
             if (string.IsNullOrEmpty(objectId))
             {
-                throw new ArgumentException("object_id parameter can't be null or empty.");
+                throw new ArgumentException("objectId parameter can't be null or empty.");
             }
         }
 
         public override string ToString()
         {
-            return "(" + PartitionId + "," + ObjectId + ")";
+            return $"{PartitionId}, {ObjectId}";
         }
 
-        public bool Equals([AllowNull] GStoreObjectIdentifier other)
+        public bool Equals(GStoreObjectIdentifier other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;

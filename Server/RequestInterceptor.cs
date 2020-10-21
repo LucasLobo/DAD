@@ -1,6 +1,7 @@
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GStoreServer
@@ -9,21 +10,26 @@ namespace GStoreServer
     {
         private readonly int minDelay;
         private readonly int maxDelay;
+        private readonly ManualResetEventSlim freezeLock;
         private readonly Random r = new Random();
 
-        public RequestInterceptor(int minDelay = 0, int maxDelay = 0)
+        public RequestInterceptor(ManualResetEventSlim freezeLock, int minDelay, int maxDelay)
         {
             if (minDelay > maxDelay)
             {
-                throw new ArgumentException("Minimum delay has to be less or equal than maximum delay");
+                throw new ArgumentException("Minimum delay has to be less or equal than maximum delay.");
             }
+            this.freezeLock = freezeLock ?? throw new ArgumentNullException("ReaderWriter lock cannot be null.");
             this.minDelay = minDelay;
             this.maxDelay = maxDelay;
         }
         public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context, UnaryServerMethod<TRequest, TResponse> continuation)
         {
-            var response = await base.UnaryServerHandler(request, context, continuation);
+            freezeLock.Wait();
+            TResponse response = await base.UnaryServerHandler(request, context, continuation);
+            freezeLock.Wait();
             await Task.Delay(r.Next(minDelay, maxDelay));
+            freezeLock.Wait();
             return response;
         }
     }

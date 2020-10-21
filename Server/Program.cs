@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Utils;
@@ -10,17 +12,21 @@ namespace GStoreServer
         const int Port = 8081;
         static void Main(string[] args)
         {
-
             int minDelay = 0;
-            int maxDelay = 250;
+            int maxDelay = 0;
+            ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
             Server server = new Server
             {
-                Services = { GStoreService.BindService(new ServerService()).Intercept(new RequestInterceptor(minDelay, maxDelay)) },
+                Services =
+                {
+                    GStoreService.BindService(new ServerService()).Intercept(new RequestInterceptor(freezeLock, minDelay, maxDelay)),
+                    PuppetMasterServerServices.BindService(new PuppetMasterServerService(freezeLock))
+                },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
-            server.Start();
             Console.WriteLine("GStore server listening on port " + Port);
-            
+            Console.WriteLine("Press any key to stop the server...");
+            server.Start();
 
             //GStoreObject obj1 = new GStoreObject(new GStoreObjectIdentifier("1", "1"), "v1");
             //GStoreObject obj2 = new GStoreObject(new GStoreObjectIdentifier("1", "2"), "v2");
@@ -38,8 +44,8 @@ namespace GStoreServer
 
             //Console.WriteLine(gstoreserver.Read(new GStoreObjectIdentifier("1", "4")));
 
-            Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
+            Console.WriteLine("\nShutting down...");
             server.ShutdownAsync().Wait();
         }
     }

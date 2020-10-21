@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Utils
 {
-    public class GStoreObject
+    public class GStoreObject : IEquatable<GStoreObject>
     {
         public GStoreObjectIdentifier Identifier { get; }
         public string Value { get; }
@@ -32,7 +30,19 @@ namespace Utils
 
         public override string ToString()
         {
-            return Value;
+            return $"{Identifier.PartitionId}, {Identifier.ObjectId}, {Value}";
+        }
+
+        public bool Equals(GStoreObject other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Identifier.PartitionId.Equals(other.Identifier.PartitionId) && Identifier.ObjectId.Equals(other.Identifier.ObjectId);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Identifier.PartitionId, Identifier.ObjectId);
         }
 
     }

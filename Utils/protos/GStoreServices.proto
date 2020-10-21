@@ -1,4 +1,4 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 import "google/protobuf/empty.proto";
 
 service GStoreService {
@@ -8,37 +8,37 @@ service GStoreService {
 	rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
 }
 
-message ObjectIdentifier {
+message DataObjectIdentifier {
 	string partition_id = 1;
 	string object_id = 2;
 }
 
-message Object {
-	ObjectIdentifier object_identifier = 1;
+message DataObject {
+	DataObjectIdentifier object_identifier = 1;
 	string value = 2;
 }
 
-message ObjectReplica {
-	Object object = 1;
+message DataObjectReplica {
+	DataObject object = 1;
 	bool is_master_replica = 2;
 }
 
 message GStoreReadRequest {
-	ObjectIdentifier object_identifier = 1;
+	DataObjectIdentifier object_identifier = 1;
 }
 
 message GStoreReadReply {
-	Object object = 1;
+	DataObject object = 1;
 }
 
 message GStoreWriteRequest {
-	Object object = 1;
+	DataObject object = 1;
 }
 
 message GStoreListServerReply {
-	repeated ObjectReplica object_replicas = 1;
+	repeated DataObjectReplica object_replicas = 1;
 }
 
 message GStoreListGlobalReply {
-	repeated ObjectIdentifier object_identifiers = 1;
+	repeated DataObjectIdentifier object_identifiers = 1;
 }

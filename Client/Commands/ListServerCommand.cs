@@ -35,7 +35,7 @@ namespace Client.Commands
                 Server server;
                 server = ConnectionManager.GetServer(serverId);
                 GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
-                foreach (ObjectReplica replica in gStoreListServerReply.ObjectReplicas)
+                foreach (DataObjectReplica replica in gStoreListServerReply.ObjectReplicas)
                 {
                     Console.WriteLine($"Partition: {replica.Object.ObjectIdentifier.PartitionId} | Server: {replica.Object.ObjectIdentifier.PartitionId} " +
                         $"| Master: {replica.IsMasterReplica} | Value: {replica.Object.Value}");

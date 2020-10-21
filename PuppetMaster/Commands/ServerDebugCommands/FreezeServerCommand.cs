@@ -10,8 +10,8 @@ namespace PuppetMaster.Commands
     class FreezeServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        private PuppetMasterServerServices.PuppetMasterServerServicesClient serverStub;
-        public FreezeServerCommand(TextBox output, PuppetMasterServerServices.PuppetMasterServerServicesClient serverStub) : base(true)
+        private PuppetMasterServerService.PuppetMasterServerServiceClient serverStub;
+        public FreezeServerCommand(TextBox output, PuppetMasterServerService.PuppetMasterServerServiceClient serverStub) : base(true)
         {
             this.txtBoxOutput = output;
             this.serverStub = serverStub;

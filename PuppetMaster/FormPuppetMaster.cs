@@ -66,7 +66,7 @@ namespace PuppetMaster
         { 
             string address = "http://localhost:8081";
             GrpcChannel channel = GrpcChannel.ForAddress(address);
-            PuppetMasterServerServices.PuppetMasterServerServicesClient client = new PuppetMasterServerServices.PuppetMasterServerServicesClient(channel);
+            PuppetMasterServerService.PuppetMasterServerServiceClient client = new PuppetMasterServerService.PuppetMasterServerServiceClient(channel);
 
             // possible commands for configuration
             commandDispatcher.Register("replicationfactor", new ReplicationFactorCommand(txtBoxOutput));

@@ -19,8 +19,8 @@ namespace GStoreServer
             {
                 Services =
                 {
-                    GStoreService.BindService(new ServerService()).Intercept(new RequestInterceptor(freezeLock, minDelay, maxDelay)),
-                    PuppetMasterServerServices.BindService(new PuppetMasterServerService(freezeLock))
+                    GStoreService.BindService(new ServerServiceImpl()).Intercept(new RequestInterceptor(freezeLock, minDelay, maxDelay)),
+                    PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
                 },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };

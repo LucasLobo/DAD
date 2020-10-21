@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,8 +13,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="..\Utils\protos\GStoreServices.proto" ProtoRoot=".." GrpcServices="Server" />
-    <Protobuf Include="..\Utils\protos\PuppetMasterServerServices.proto" ProtoRoot=".." GrpcServices="Server" />
+    <Protobuf Include="..\Utils\protos\GStoreService.proto" ProtoRoot=".." GrpcServices="Server" />
+    <Protobuf Include="..\Utils\protos\PuppetMasterServerService.proto" ProtoRoot=".." GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>

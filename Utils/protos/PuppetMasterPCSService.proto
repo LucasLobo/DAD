@@ -1,7 +1,7 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 import "google/protobuf/empty.proto";
 
-service PuppetMasterPCSServices {
+service PuppetMasterPCSService {
 	rpc ReplicationFactor (ReplicationFactorRequest) returns (google.protobuf.Empty);
 	rpc Server (ServerRequest) returns (google.protobuf.Empty);
 	rpc Partition (PartitionRequest) returns (google.protobuf.Empty);

@@ -75,7 +75,7 @@ namespace PuppetMaster
             commandDispatcher.Register("client", new CreateClientCommand(txtBoxOutput));
             commandDispatcher.Register("status", new StatusCommand(txtBoxOutput));
             // possible commands for Replicas (debug)
-            commandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput));
+            commandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput, client));
             commandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput, client));
             commandDispatcher.Register("unfreeze", new UnfreezeServerCommand(txtBoxOutput, client));
             // help commands

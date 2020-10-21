@@ -12,15 +12,21 @@ namespace Client
     class Program
     {
 
-        static readonly CommandDispatcher commandDispatcher = new CommandDispatcher();
-
-        private static void RegisterCommands(ConnectionManager connectionManager)
+        private static void RegisterCommands(CommandDispatcher commandDispatcher, ConnectionManager connectionManager)
         {
             commandDispatcher.Register("read", new ReadCommand(connectionManager));
             commandDispatcher.Register("write", new WriteCommand(connectionManager));
             commandDispatcher.Register("listServer", new ListServerCommand(connectionManager));
             commandDispatcher.Register("listGlobal", new ListGlobalCommand(connectionManager));
             commandDispatcher.Register("wait", new WaitCommand());
+        }
+
+        public static ConnectionManager CreateConnectionManager()
+        {
+            ConnectionManager connectionManager = new ConnectionManager();
+            connectionManager.PrintPartitions();
+            Console.WriteLine();
+            return connectionManager;
         }
 
         static async Task Main(string[] args)
@@ -53,19 +59,17 @@ namespace Client
                 return;
             }
 
-            ConnectionManager connectionManager = new ConnectionManager();
-            connectionManager.PrintPartitions();
-            Console.WriteLine();
-            Console.WriteLine();
-
-            RegisterCommands(connectionManager);
+            CommandDispatcher commandDispatcher = new CommandDispatcher();
+            ConnectionManager connectionManager = CreateConnectionManager();
+            RegisterCommands(commandDispatcher, connectionManager);
 
             try
             {
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
+
                 Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
-                for (int i = 0; i < 25; i++)
+                for (int i = 0; i < 15; i++)
                 {
                     Console.WriteLine("---");
                     await Task.Delay(500);
@@ -78,30 +82,6 @@ namespace Client
                 Console.WriteLine(e.Message);
                 return;
             }
-
-            //Testing();
-        }
-
-        public static void Testing(ConnectionManager connectionManager)
-        {
-
-            Console.WriteLine(connectionManager.ChooseServerForWrite("part-1").Id);
-            Console.WriteLine(connectionManager.ChooseServerForWrite("part-2").Id);
-            Console.WriteLine(connectionManager.ChooseServerForWrite("part-3").Id);
-            Console.WriteLine(connectionManager.ChooseServerForWrite("part-4").Id);
-            Console.WriteLine(connectionManager.ChooseServerForWrite("part-5").Id);
-
-
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-2").Id);
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-1").Id);
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-1", "s-5").Id);
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-5", "s-5").Id);
-            Console.WriteLine(connectionManager.ChooseServerForRead("part-3", "s-5").Id);
-
-            Server server = connectionManager.ChooseServerForWrite("part-1");
-            GStoreListGlobalReply gStoreListGlobalReply = server.Stub.ListGlobal(new Empty());
-
-            Console.WriteLine(gStoreListGlobalReply.ObjectIdentifiers.ToString());
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using Grpc.Core;
+using Grpc.Core.Interceptors;
 using Utils;
 
 namespace GStoreServer
@@ -9,9 +10,12 @@ namespace GStoreServer
         const int Port = 8081;
         static void Main(string[] args)
         {
+
+            int minDelay = 0;
+            int maxDelay = 250;
             Server server = new Server
             {
-                Services = { GStoreService.BindService(new ServerService()) },
+                Services = { GStoreService.BindService(new ServerService()).Intercept(new RequestInterceptor(minDelay, maxDelay)) },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();

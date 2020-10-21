@@ -1,5 +1,6 @@
 using Client.Controllers;
 using Client.Domain;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,10 @@ namespace Client.Commands
             catch (ServerBindException e)
             {
                 Console.WriteLine($"ERROR: {e.Message}");
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
+            {
+                Console.WriteLine($"Could not establish connection with server.");
             }
         }
     }

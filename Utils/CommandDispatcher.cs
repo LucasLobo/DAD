@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Utils
@@ -14,7 +15,6 @@ namespace Utils
         {
             commandMap.Add(commandName, command);
         }
-
 
         public bool IsConcurrent(string line)
         {
@@ -42,7 +42,12 @@ namespace Utils
             List<Task> tasks = new List<Task>();
             foreach (String line in lines)
             {
-                List<string> splitLine = new List<String>(line.Split(" "));
+
+                List<string> splitLine = Regex.Matches(line, @"[\""].+?[\""]|[^ ]+")
+                    .Cast<Match>()
+                    .Select(m => m.Value.Replace("\"", ""))
+                    .ToList();
+
                 string commandName = splitLine.ElementAt(0);
                 splitLine.RemoveAt(0);
 
@@ -67,10 +72,24 @@ namespace Utils
             commandMap.TryGetValue(commandName, out Command command);
             if (command == null)
             {
-                Console.WriteLine("Unknown command. Use \"?\" for help."); //todo ?
-                return null;
+                throw new CommandNotRegisteredException($"Command '{commandName}' does not exist.");
             }
             return command;
         }
+    }
+
+    [Serializable]
+    public class CommandNotRegisteredException : Exception
+    {
+        public CommandNotRegisteredException()
+        { }
+
+        public CommandNotRegisteredException(string message)
+            : base(message)
+        { }
+
+        public CommandNotRegisteredException(string message, Exception innerException)
+            : base(message, innerException)
+        { }
     }
 }

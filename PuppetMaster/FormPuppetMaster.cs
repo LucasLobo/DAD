@@ -51,6 +51,10 @@ namespace PuppetMaster
                 txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
                 return;
             }
+            catch (CommandNotRegisteredException exception)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
+            }
             finally
             {
                 txtBoxCommand.ReadOnly = false;

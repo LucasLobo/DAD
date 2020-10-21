@@ -1,8 +1,9 @@
-﻿using Client.Domain;
+using Client.Domain;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Utils;
+using Client.Controllers;
 
 namespace Client.Commands
 {
@@ -11,7 +12,7 @@ namespace Client.Commands
     {
         public static int EXPECTED_ARGUMENTS = 0;
 
-        private ConnectionManager ConnectionManager;
+        private readonly ConnectionManager ConnectionManager;
 
         public ListGlobalCommand(ConnectionManager connectionManager) : base(false)
         {
@@ -25,7 +26,14 @@ namespace Client.Commands
                 Console.WriteLine("Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
-            Console.WriteLine("Processing...");
+            Console.WriteLine("listGlobal");
+
+            HashSet<GStoreObjectIdentifier> gStoreObjectIdentifiers = await ListGlobalController.Execute(ConnectionManager);
+
+            foreach (GStoreObjectIdentifier objectId in gStoreObjectIdentifiers)
+            {
+                Console.WriteLine($"=> {objectId.PartitionId}, {objectId.ObjectId}");
+            }
         }
     }
 }

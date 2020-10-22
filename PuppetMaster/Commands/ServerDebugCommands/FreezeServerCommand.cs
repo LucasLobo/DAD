@@ -26,10 +26,8 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            // Dummy implementation
             try
             {
-                txtBoxOutput.AppendText(Environment.NewLine + "Freeze START.");
                 await serverStub.FreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
                 txtBoxOutput.AppendText(Environment.NewLine + "Freeze DONE.");
             }

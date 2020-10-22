@@ -1,3 +1,4 @@
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -25,9 +26,16 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            // Dummy implementation
-            await serverStub.UnfreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
+            try
+            {
+                await serverStub.UnfreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
+                txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
+            }
+            catch (RpcException e)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + e.Message);
+            }
+
 
         }
     }

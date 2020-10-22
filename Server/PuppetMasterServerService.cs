@@ -14,6 +14,17 @@ namespace GStoreServer
             this.freezeLock = freezeLock ?? throw new ArgumentNullException("ReaderWriter lock cannot be null.");
         }
 
+        public override Task<Empty> Crash(Empty request, ServerCallContext context)
+        {
+            Task.Run(async () =>
+            {
+                await Task.Delay(150);
+                Console.WriteLine("CRASHING...");
+                Environment.Exit(1);
+            });
+            return Task.FromResult(new Empty());
+        }
+
         public override Task<Empty> Freeze(Empty request, ServerCallContext context)
         {
             Console.WriteLine("FREEZE");

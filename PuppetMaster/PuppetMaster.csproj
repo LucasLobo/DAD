@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -14,8 +14,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="..\Utils\protos\PuppetMasterServerServices.proto" ProtoRoot=".." GrpcServices="Client" />
-    <Protobuf Include="..\Utils\protos\PuppetMasterPCSServices.proto" ProtoRoot=".." GrpcServices="Client" />
+    <Protobuf Include="..\Utils\protos\PuppetMasterServerService.proto" ProtoRoot=".." GrpcServices="Client" />
+    <Protobuf Include="..\Utils\protos\PuppetMasterPCSService.proto" ProtoRoot=".." GrpcServices="Client" />
   </ItemGroup>
 
   <ItemGroup>

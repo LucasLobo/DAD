@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace GStoreServer
 {
-    class PuppetMasterServerService : PuppetMasterServerServices.PuppetMasterServerServicesBase
+    class PuppetMasterServerServiceImpl : PuppetMasterServerService.PuppetMasterServerServiceBase
     {
         private readonly ManualResetEventSlim freezeLock;
-        public PuppetMasterServerService(ManualResetEventSlim freezeLock)
+        public PuppetMasterServerServiceImpl(ManualResetEventSlim freezeLock)
         {
-            this.freezeLock = freezeLock ?? throw new ArgumentNullException("ReaderWriter lock cannot be null.");
+            this.freezeLock = freezeLock ?? throw new ArgumentNullException("FreezeLock cannot be null.");
         }
 
         public override Task<Empty> Crash(Empty request, ServerCallContext context)

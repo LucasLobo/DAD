@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace GStoreServer
 {
-    class ServerService : GStoreService.GStoreServiceBase
+    class ServerServiceImpl : GStoreService.GStoreServiceBase
     {
 
-        public ServerService() { }
+        public ServerServiceImpl() { }
 
         public override Task<GStoreReadReply> Read(GStoreReadRequest request, ServerCallContext context)
         {

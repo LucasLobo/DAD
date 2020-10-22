@@ -9,10 +9,12 @@ namespace PuppetMaster.Commands
     class UnfreezeServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        public UnfreezeServerCommand(TextBox output) : base(true)
+        private PuppetMasterServerServices.PuppetMasterServerServicesClient serverStub;
+        public UnfreezeServerCommand(TextBox output, PuppetMasterServerServices.PuppetMasterServerServicesClient serverStub) : base(true)
         {
             this.txtBoxOutput = output;
-        }
+            this.serverStub = serverStub;
+    }
 
         public static int EXPECTED_ARGUMENTS = 1;
         public override async Task ExecuteAsync(List<string> arguments)
@@ -24,7 +26,9 @@ namespace PuppetMaster.Commands
             }
 
             // Dummy implementation
+            await serverStub.UnfreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
             this.txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
+
         }
     }
 }

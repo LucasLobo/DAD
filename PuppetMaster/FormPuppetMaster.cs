@@ -1,3 +1,4 @@
+using Grpc.Net.Client;
 using PuppetMaster.Commands;
 using System;
 using System.Windows.Forms;
@@ -13,7 +14,7 @@ namespace PuppetMaster
         public FormPuppetMaster()
         {
             InitializeComponent();
-
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             RegisterCommands();
         }
 
@@ -62,7 +63,11 @@ namespace PuppetMaster
         }
 
         private void RegisterCommands()
-        {
+        { 
+            string address = "http://localhost:8081";
+            GrpcChannel channel = GrpcChannel.ForAddress(address);
+            PuppetMasterServerServices.PuppetMasterServerServicesClient client = new PuppetMasterServerServices.PuppetMasterServerServicesClient(channel);
+
             // possible commands for configuration
             commandDispatcher.Register("replicationfactor", new ReplicationFactorCommand(txtBoxOutput));
             commandDispatcher.Register("partition", new PartitionCommand(txtBoxOutput));
@@ -71,8 +76,8 @@ namespace PuppetMaster
             commandDispatcher.Register("status", new StatusCommand(txtBoxOutput));
             // possible commands for Replicas (debug)
             commandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput));
-            commandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput));
-            commandDispatcher.Register("unfreeze", new UnfreezeServerCommand(txtBoxOutput));
+            commandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput, client));
+            commandDispatcher.Register("unfreeze", new UnfreezeServerCommand(txtBoxOutput, client));
             // help commands
             commandDispatcher.Register("wait", new WaitCommand(txtBoxOutput));
             commandDispatcher.Register("help", new HelpCommand(txtBoxOutput));

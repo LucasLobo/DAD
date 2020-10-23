@@ -5,6 +5,7 @@ using Client.Commands;
 using Client.Domain;
 using Google.Protobuf.WellKnownTypes;
 using Utils;
+using Grpc.Core;
 
 namespace Client
 {
@@ -65,6 +66,20 @@ namespace Client
 
             try
             {
+                int Port = 8085;
+                Grpc.Core.Server server = new Grpc.Core.Server
+                {
+                    Services =
+                    {
+                        PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
+                    },
+                    Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
+                };
+                Console.WriteLine("GStore server listening on port " + Port);
+                Console.WriteLine("Press any key to stop the server...");
+
+                server.Start();
+
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
                 Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());

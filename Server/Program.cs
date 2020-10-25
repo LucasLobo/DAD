@@ -15,7 +15,7 @@ namespace GStoreServer
             int minDelay = 0;
             int maxDelay = 0;
             ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
-            Server server = new Server
+            Grpc.Core.Server server = new Grpc.Core.Server
             {
                 Services =
                 {

@@ -16,6 +16,7 @@
     </PackageReference>
     <Protobuf Include="..\Utils\protos\PuppetMasterServerService.proto" ProtoRoot=".." GrpcServices="Client" />
     <Protobuf Include="..\Utils\protos\PuppetMasterPCSService.proto" ProtoRoot=".." GrpcServices="Client" />
+    <Protobuf Include="..\Utils\protos\PuppetMasterNodeStatusService.proto" ProtoRoot=".." GrpcServices="Client" />
   </ItemGroup>
 
   <ItemGroup>

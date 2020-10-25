@@ -20,6 +20,7 @@ namespace Client
             commandDispatcher.Register("listServer", new ListServerCommand(connectionManager));
             commandDispatcher.Register("listGlobal", new ListGlobalCommand(connectionManager));
             commandDispatcher.Register("wait", new WaitCommand());
+            commandDispatcher.Register("status", new StatusCommand(connectionManager));
         }
 
         public static ConnectionManager CreateConnectionManager()
@@ -71,7 +72,7 @@ namespace Client
                 {
                     Services =
                     {
-                        PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
+                        PuppetMasterNodeStatusService.BindService(new PuppetMasterNodeStatusServiceImpl())
                     },
                     Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
                 };

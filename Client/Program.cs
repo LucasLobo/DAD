@@ -82,7 +82,7 @@ namespace Client
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
-                /*Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
+                Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
                 for (int i = 0; i < 15; i++)
                 {
@@ -90,7 +90,7 @@ namespace Client
                     await Task.Delay(500);
                 }
 
-                await dispatcher;*/
+                await dispatcher;
 
                 Console.WriteLine("Press any key to stop the client...");
                 Console.ReadKey();

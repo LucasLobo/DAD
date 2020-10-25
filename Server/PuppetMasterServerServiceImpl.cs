@@ -10,10 +10,6 @@ namespace GStoreServer
     {
         private readonly ManualResetEventSlim freezeLock;
 
-        public PuppetMasterServerServiceImpl()
-        {
-        }
-
         public PuppetMasterServerServiceImpl(ManualResetEventSlim freezeLock)
         {
             this.freezeLock = freezeLock ?? throw new ArgumentNullException("FreezeLock cannot be null.");

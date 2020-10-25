@@ -18,6 +18,7 @@ namespace Utils
 
             foreach (string line in lines)
             {
+                if (line[0].Equals('#')) continue;
                 List<string> splitLine = line.Trim().Split(' ').ToList();
                 string command = splitLine.ElementAt(0);
                 splitLine.RemoveAt(0);

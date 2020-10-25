@@ -1,3 +1,4 @@
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,9 +10,11 @@ namespace PuppetMaster.Commands
     class CrashServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        public CrashServerCommand(TextBox output) : base(true)
+        private PuppetMasterServerService.PuppetMasterServerServiceClient serverStub;
+        public CrashServerCommand(TextBox output, PuppetMasterServerService.PuppetMasterServerServiceClient serverStub) : base(true)
         {
             this.txtBoxOutput = output;
+            this.serverStub = serverStub;
         }
 
         public static int EXPECTED_ARGUMENTS = 1;
@@ -23,8 +26,15 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Crash DONE.");
+            try
+            {
+                await serverStub.CrashAsync(new Google.Protobuf.WellKnownTypes.Empty());
+                txtBoxOutput.AppendText(Environment.NewLine + "Crash DONE.");
+            }
+            catch (RpcException e)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + e.Message);
+            }
         }
     }
 }

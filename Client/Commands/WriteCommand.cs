@@ -1,4 +1,6 @@
-﻿using Client.Domain;
+using Client.Controllers;
+using Client.Domain;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +27,25 @@ namespace Client.Commands
                 Console.WriteLine("Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
-            Console.WriteLine($"Write... {arguments.ElementAt(0)}");
-            await Task.Delay(1000);
-            Console.WriteLine($"Write End... {arguments.ElementAt(0)}");
+
+            string partitionId = arguments.ElementAt(0);
+            string objectId = arguments.ElementAt(1);
+            string value = arguments.ElementAt(2);
+
+            try
+            {
+                Console.WriteLine($"Write {partitionId} {objectId} {value}");
+                await WriteController.Execute(ConnectionManager, partitionId, objectId, value);
+                Console.WriteLine("Write success");
+            }
+            catch (ServerBindException e)
+            {
+                Console.WriteLine($"ERROR: {e.Message}");
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
+            {
+                Console.WriteLine($"Could not establish connection with server.");
+            }
         }
     }
 }

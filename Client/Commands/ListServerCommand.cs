@@ -1,4 +1,6 @@
+using Client.Controllers;
 using Client.Domain;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,18 +34,20 @@ namespace Client.Commands
 
             try
             {
-                Server server;
-                server = ConnectionManager.GetServer(serverId);
-                GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
-                foreach (ObjectReplica replica in gStoreListServerReply.ObjectReplicas)
+
+                HashSet<GStoreObjectReplica> gStoreObjectReplicas = await ListServerController.Execute(ConnectionManager, serverId);
+                foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
                 {
-                    Console.WriteLine($"Partition: {replica.Object.ObjectIdentifier.PartitionId} | Server: {replica.Object.ObjectIdentifier.PartitionId} " +
-                        $"| Master: {replica.IsMasterReplica} | Value: {replica.Object.Value}");
+                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {replica.IsMaster}");
                 }
             }
             catch (ServerBindException e)
             {
                 Console.WriteLine($"ERROR: {e.Message}");
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
+            {
+                Console.WriteLine($"Could not establish connection with server.");
             }
         }
     }

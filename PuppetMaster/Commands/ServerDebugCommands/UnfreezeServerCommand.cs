@@ -1,3 +1,4 @@
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,10 +10,12 @@ namespace PuppetMaster.Commands
     class UnfreezeServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        public UnfreezeServerCommand(TextBox output) : base(true)
+        private PuppetMasterServerService.PuppetMasterServerServiceClient serverStub;
+        public UnfreezeServerCommand(TextBox output, PuppetMasterServerService.PuppetMasterServerServiceClient serverStub) : base(true)
         {
             this.txtBoxOutput = output;
-        }
+            this.serverStub = serverStub;
+    }
 
         public static int EXPECTED_ARGUMENTS = 1;
         public override async Task ExecuteAsync(List<string> arguments)
@@ -23,8 +26,17 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
+            try
+            {
+                await serverStub.UnfreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
+                txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
+            }
+            catch (RpcException e)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + e.Message);
+            }
+
+
         }
     }
 }

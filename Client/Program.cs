@@ -75,14 +75,14 @@ namespace Client
                     },
                     Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
                 };
-                Console.WriteLine("GStore server listening on port " + Port);
-                Console.WriteLine("Press any key to stop the server...");
+                Console.WriteLine("Client listening on port " + Port);
+                
 
                 server.Start();
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
-                Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
+                /*Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
                 for (int i = 0; i < 15; i++)
                 {
@@ -90,7 +90,12 @@ namespace Client
                     await Task.Delay(500);
                 }
 
-                await dispatcher;
+                await dispatcher;*/
+
+                Console.WriteLine("Press any key to stop the client...");
+                Console.ReadKey();
+                Console.WriteLine("\nShutting down...");
+                server.ShutdownAsync().Wait();
             }
             catch (PreprocessingException e)
             {

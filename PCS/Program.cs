@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Grpc.Core;
 
 namespace PCS
@@ -12,7 +12,7 @@ namespace PCS
 
             Server server = new Server
             {
-                Services = { PuppetMasterPCSServices.BindService(new PCSService()) },
+                Services = { PuppetMasterPCSService.BindService(new PCSService()) },
                 Ports = { new ServerPort("localhost", PORT, ServerCredentials.Insecure) }
             };
             server.Start();

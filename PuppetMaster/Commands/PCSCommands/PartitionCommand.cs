@@ -1,3 +1,4 @@
+using PuppetMaster.Domain;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace PuppetMaster.Commands
         private TextBox txtBoxOutput;
         public PartitionCommand(TextBox output) : base(true)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
         }
 
         public static int BASE_ARGUMENTS = 2;
@@ -21,12 +22,12 @@ namespace PuppetMaster.Commands
             int MAX_ARGUMENTS = BASE_ARGUMENTS + serversNumber;
             if (arguments.Count != MAX_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
 
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Partition DONE.");
+            SystemConfiguration.GetInstance().AddPartitionConfig(string.Join(" ", arguments));
+            txtBoxOutput.AppendText(Environment.NewLine + "Partition Configurated.");
         }
     }
 }

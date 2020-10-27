@@ -1,5 +1,6 @@
 using Grpc.Net.Client;
 using PuppetMaster.Commands;
+using PuppetMaster.Domain;
 using System;
 using System.Windows.Forms;
 using Utils;
@@ -9,7 +10,11 @@ namespace PuppetMaster
     public partial class FormPuppetMaster : Form
     {
 
-        static readonly CommandDispatcher commandDispatcher = new CommandDispatcher();
+        private static readonly CommandDispatcher CommandDispatcher = new CommandDispatcher();
+        private static readonly ConnectionManager ConnectionManager = new ConnectionManager();
+
+        // always starts with the configuration
+        private static bool isConfiguring = true;
 
         public FormPuppetMaster()
         {
@@ -43,9 +48,9 @@ namespace PuppetMaster
             bool isConcurrent;
             try
             {
-                isConcurrent = commandDispatcher.IsConcurrent(inputLine);
+                isConcurrent = CommandDispatcher.IsConcurrent(inputLine);
                 if (isConcurrent) txtBoxCommand.ReadOnly = false;
-                await commandDispatcher.ExecuteAsync(inputLine);
+                await CommandDispatcher.ExecuteAsync(inputLine);
             }
             catch (PreprocessingException exception)
             {
@@ -63,26 +68,22 @@ namespace PuppetMaster
         }
 
         private void RegisterCommands()
-        { 
-            string address = "http://localhost:8081";
-            GrpcChannel channel = GrpcChannel.ForAddress(address);
-            PuppetMasterServerService.PuppetMasterServerServiceClient client = new PuppetMasterServerService.PuppetMasterServerServiceClient(channel);
-
+        {
             // possible commands for configuration
-            commandDispatcher.Register("replicationfactor", new ReplicationFactorCommand(txtBoxOutput));
-            commandDispatcher.Register("partition", new PartitionCommand(txtBoxOutput));
-            commandDispatcher.Register("server", new CreateServerCommand(txtBoxOutput));
-            commandDispatcher.Register("client", new CreateClientCommand(txtBoxOutput));
-            commandDispatcher.Register("status", new StatusCommand(txtBoxOutput));
+            CommandDispatcher.Register("replicationfactor", new ReplicationFactorCommand(txtBoxOutput));
+            CommandDispatcher.Register("partition", new PartitionCommand(txtBoxOutput));
+            CommandDispatcher.Register("server", new CreateServerCommand(txtBoxOutput));
+            CommandDispatcher.Register("client", new CreateClientCommand(txtBoxOutput, ConnectionManager));
+            CommandDispatcher.Register("status", new StatusCommand(txtBoxOutput, ConnectionManager));
             // possible commands for Replicas (debug)
-            commandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput, client));
-            commandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput, client));
-            commandDispatcher.Register("unfreeze", new UnfreezeServerCommand(txtBoxOutput, client));
+            CommandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput, ConnectionManager));
+            CommandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput, ConnectionManager));
+            CommandDispatcher.Register("unfreeze", new UnfreezeServerCommand(txtBoxOutput, ConnectionManager));
             // help commands
-            commandDispatcher.Register("wait", new WaitCommand(txtBoxOutput));
-            commandDispatcher.Register("help", new HelpCommand(txtBoxOutput));
-            commandDispatcher.Register("clear", new ClearCommand(txtBoxOutput));
-            commandDispatcher.Register("quit", new QuitCommand(txtBoxOutput));
+            CommandDispatcher.Register("wait", new WaitCommand(txtBoxOutput));
+            CommandDispatcher.Register("help", new HelpCommand(txtBoxOutput));
+            CommandDispatcher.Register("clear", new ClearCommand(txtBoxOutput));
+            CommandDispatcher.Register("quit", new QuitCommand(txtBoxOutput));
         }
     }
 }

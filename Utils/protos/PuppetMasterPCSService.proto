@@ -4,7 +4,7 @@ import "google/protobuf/empty.proto";
 service PuppetMasterPCSService {
 	rpc ReplicationFactor (ReplicationFactorRequest) returns (google.protobuf.Empty);
 	rpc Server (ServerRequest) returns (google.protobuf.Empty);
-	rpc Partition (PartitionRequest) returns (google.protobuf.Empty);
+//	rpc Partition (PartitionRequest) returns (google.protobuf.Empty);
 	rpc Client (ClientRequest) returns (google.protobuf.Empty);
 }
 
@@ -12,21 +12,39 @@ message ReplicationFactorRequest {
 	int32 r = 1;
 }
 
+message NetworkConfiguration {
+    repeated Partition network_partition = 1;
+    repeated Server network_servers = 2;
+}
+
+message Partition {
+    int32 replication_factor = 1;
+    string partition_name = 2;
+    repeated string server_id = 3; // contains "server_id,URL" where URL = "host:port"
+}
+
+message Server {
+    string server_id = 1;
+    string url = 2;
+}
+
 message ServerRequest {
 	int32 server_id = 1;
 	string url = 2;
 	int32 min_delay = 3;
 	int32 max_delay = 4;
+    NetworkConfiguration network_configuration = 5;
 }
 
 message ClientRequest {
 	string username = 1;
 	string client_url = 2;
 	string script_file = 3;
+    NetworkConfiguration network_configuration = 4;
 }
 
-message PartitionRequest {
-	int32 r = 1;
-	string partition_name = 2;
-	repeated int32 server_ids = 3;
-}
+//message PartitionRequest {
+//	int32 r = 1;
+//	string partition_name = 2;
+//	repeated int32 server_ids = 3;
+//}

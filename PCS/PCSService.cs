@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
 using System.Diagnostics;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PCS
 {
-    class PCSService : PuppetMasterPCSServices.PuppetMasterPCSServicesBase
+    class PCSService : PuppetMasterPCSService.PuppetMasterPCSServiceBase
     {
         private const string CLIENT_LOCATION = "../../../../Client/bin/Debug/netcoreapp3.1/Client.exe";
         private const string SERVER_LOCATION = "../../../../Server/bin/Debug/netcoreapp3.1/Server.exe";

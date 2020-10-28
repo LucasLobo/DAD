@@ -15,8 +15,8 @@ message Partition {
 message ServerRequest {
 	int32 server_id = 1;
     string url = 2;
-	int32 min_delay = 3;
-	int32 max_delay = 4;
+    int32 min_delay = 3;
+    int32 max_delay = 4;
     string network_configuration = 5;
 }
 

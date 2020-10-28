@@ -18,30 +18,23 @@ namespace Utils
 
         public bool IsConcurrent(string line)
         {
-            List<string> splitLine;
-            string commandName;
-            SeparateCommandNameAndArguments(line, out splitLine, out commandName);
-            splitLine.RemoveAt(0);
-
+            string commandName = ExtractCommandName(line);
             Command command = GetCommand(commandName);
             return command.Concurrent;
         }
 
         public async Task ExecuteAsync(string line)
         {
-            List<string> splitLine;
-            string commandName;
-            SeparateCommandNameAndArguments(line, out splitLine, out commandName);
-            splitLine.RemoveAt(0);
-
+            SeparateCommandNameAndArguments(line, out List<string> splitLine, out string commandName);
             Command command = GetCommand(commandName);
             await command.ExecuteAsync(splitLine);
         }
 
         private static void SeparateCommandNameAndArguments(string line, out List<string> splitLine, out string commandName)
         {
-            splitLine = new List<String>(line.Split(" "));
+            splitLine = new List<string>(line.Split(" "));
             commandName = ExtractCommandName(line);
+            splitLine.RemoveAt(0);
         }
 
         public static string ExtractCommandName(string line)

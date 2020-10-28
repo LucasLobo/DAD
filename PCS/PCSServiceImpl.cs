@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace PCS
 {
-    class PCSService : PuppetMasterPCSService.PuppetMasterPCSServiceBase
+    class PCSServiceImpl : PuppetMasterPCSService.PuppetMasterPCSServiceBase
     {
         private const string CLIENT_LOCATION = "../../../../Client/bin/Debug/netcoreapp3.1/Client.exe";
         private const string SERVER_LOCATION = "../../../../Server/bin/Debug/netcoreapp3.1/Server.exe";
 
-        public PCSService() { }
+        public PCSServiceImpl() { }
 
         public override Task<Empty> Client(ClientRequest request, ServerCallContext context)
         {

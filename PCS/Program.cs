@@ -12,7 +12,7 @@ namespace PCS
 
             Server server = new Server
             {
-                Services = { PuppetMasterPCSService.BindService(new PCSService()) },
+                Services = { PuppetMasterPCSService.BindService(new PCSServiceImpl()) },
                 Ports = { new ServerPort("localhost", PORT, ServerCredentials.Insecure) }
             };
             server.Start();

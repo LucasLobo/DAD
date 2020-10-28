@@ -5,7 +5,7 @@ namespace Utils
     public class GStoreObject : IEquatable<GStoreObject>
     {
         public GStoreObjectIdentifier Identifier { get; }
-        public string Value { get; }
+        public string Value { get; set; }
 
         public GStoreObject(GStoreObjectIdentifier identifier, string value)
         {

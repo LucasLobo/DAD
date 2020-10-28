@@ -2,13 +2,17 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
 using System.Threading.Tasks;
+using Utils;
 
 namespace GStoreServer
 {
     class ServerServiceImpl : GStoreService.GStoreServiceBase
     {
-
-        public ServerServiceImpl() { }
+        private GStore gStore;
+        public ServerServiceImpl(GStore gStore)
+        {
+            this.gStore = gStore;
+        }
 
         public override Task<GStoreReadReply> Read(GStoreReadRequest request, ServerCallContext context)
         {
@@ -18,9 +22,13 @@ namespace GStoreServer
         private GStoreReadReply ExecuteRead(GStoreReadRequest request)
         {
             Console.WriteLine($"Read request -> PartitionId: {request.ObjectIdentifier.PartitionId} ObjectId: {request.ObjectIdentifier.ObjectId}");
+            GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.ObjectIdentifier.PartitionId, request.ObjectIdentifier.ObjectId);
+            string value = gStore.Read(gStoreObjectIdentifier);
+
+            if (value == null) value = "N/A";
             return new GStoreReadReply
             {
-                Object = DataObjectBuilder.FromObjectIdentifier(request.ObjectIdentifier, "Value")
+                Object = DataObjectBuilder.FromObjectIdentifier(request.ObjectIdentifier, value)
             };
         }
 
@@ -31,7 +39,11 @@ namespace GStoreServer
 
         private Empty ExecuteWrite(GStoreWriteRequest request)
         {
-            Console.WriteLine($"Write request -> PartitionId:{request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier} Value: {request.Object.Value}");
+            Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier} Value: {request.Object.Value}");
+
+            GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.Object.ObjectIdentifier.PartitionId, request.Object.ObjectIdentifier.ObjectId);
+            gStore.Write(gStoreObjectIdentifier, request.Object.Value);
+
             return new Empty();
         }
 

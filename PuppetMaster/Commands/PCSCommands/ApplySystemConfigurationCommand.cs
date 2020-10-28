@@ -21,14 +21,18 @@ namespace PuppetMaster.Commands.PCSCommands
 
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            List<string> configurationLines = SystemConfiguration.GetInstance().GetSystemConfiguration();
-            if (configurationLines == null || configurationLines.Count < 1)
+            List<string> serverLines = SystemConfiguration.GetInstance().GetServerLines();
+            if (serverLines == null || serverLines.Count < 1)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + "No configuration provided. Please configure the system first.");
                 return;
             }
 
-            await ApplySystemConfigurationController.Execute(ConnectionManager, configurationLines);
+            
+            string servers = SystemConfiguration.GetInstance().GetServersArgument();
+            string partitions = SystemConfiguration.GetInstance().GetPartitionsArgument();
+
+            await ApplySystemConfigurationController.Execute(ConnectionManager, serverLines, servers, partitions);
 
             txtBoxOutput.AppendText(Environment.NewLine + "System Configuration Applied.");
         }

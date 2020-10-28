@@ -1,5 +1,6 @@
 using Grpc.Net.Client;
 using PuppetMaster.Commands;
+using PuppetMaster.Commands.PCSCommands;
 using PuppetMaster.Domain;
 using System;
 using System.Windows.Forms;
@@ -50,6 +51,14 @@ namespace PuppetMaster
             {
                 isConcurrent = CommandDispatcher.IsConcurrent(inputLine);
                 if (isConcurrent) txtBoxCommand.ReadOnly = false;
+                //hard style
+                string commandName = CommandDispatcher.ExtractCommandName(inputLine);
+                if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("partition") && !commandName.Equals("server")
+                    && !commandName.Equals("help") && !commandName.Equals("wait") && !commandName.Equals("quit") && !commandName.Equals("clear"))
+                {
+                    isConfiguring = false;
+                    await CommandDispatcher.ExecuteAsync("applysystemconfiguration");
+                }
                 await CommandDispatcher.ExecuteAsync(inputLine);
             }
             catch (PreprocessingException exception)
@@ -72,9 +81,10 @@ namespace PuppetMaster
             // possible commands for configuration
             CommandDispatcher.Register("replicationfactor", new ReplicationFactorCommand(txtBoxOutput));
             CommandDispatcher.Register("partition", new PartitionCommand(txtBoxOutput));
-            CommandDispatcher.Register("server", new CreateServerCommand(txtBoxOutput));
+            CommandDispatcher.Register("server", new CreateServerCommand(txtBoxOutput, ConnectionManager));
             CommandDispatcher.Register("client", new CreateClientCommand(txtBoxOutput, ConnectionManager));
             CommandDispatcher.Register("status", new StatusCommand(txtBoxOutput, ConnectionManager));
+            CommandDispatcher.Register("applysystemconfiguration", new ApplySystemConfigurationCommand(txtBoxOutput, ConnectionManager));
             // possible commands for Replicas (debug)
             CommandDispatcher.Register("crash", new CrashServerCommand(txtBoxOutput, ConnectionManager));
             CommandDispatcher.Register("freeze", new FreezeServerCommand(txtBoxOutput, ConnectionManager));

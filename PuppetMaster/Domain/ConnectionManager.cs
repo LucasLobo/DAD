@@ -7,6 +7,7 @@ namespace PuppetMaster.Domain
 {
     class ConnectionManager
     {
+        private static readonly int PCSPORT = 10000;
         private readonly IDictionary<string, Server> serverSet;
         private readonly IDictionary<string, Client> clientSet;
         private readonly IDictionary<string, PCS> pcsSet;
@@ -26,6 +27,8 @@ namespace PuppetMaster.Domain
             PuppetMasterServerService.PuppetMasterServerServiceClient client =
                    new PuppetMasterServerService.PuppetMasterServerServiceClient(channel);
             serverSet.Add(serverId, new Server(serverId, client));
+
+            SetNewPCSConnection(url);
         }
 
         public void SetNewClientConnection(string url)
@@ -34,14 +37,18 @@ namespace PuppetMaster.Domain
             PuppetMasterClientService.PuppetMasterClientServiceClient client =
                 new PuppetMasterClientService.PuppetMasterClientServiceClient(channel);
             clientSet.Add(url, new Client(client));
+
+            SetNewPCSConnection(url);
         }
 
         public void SetNewPCSConnection(string url)
         {
-            GrpcChannel channel = GrpcChannel.ForAddress(url);
+            string newUrl = GetPCSUrlFromAnUrl(url);
+
+            GrpcChannel channel = GrpcChannel.ForAddress(newUrl);
             PuppetMasterPCSService.PuppetMasterPCSServiceClient client =
                 new PuppetMasterPCSService.PuppetMasterPCSServiceClient(channel);
-            pcsSet.Add(url, new PCS(client));
+            pcsSet[newUrl] = new PCS(client);
         }
 
         // Get Connections
@@ -92,6 +99,11 @@ namespace PuppetMaster.Domain
 
             }
             return pcs;
+        }
+
+        public string GetPCSUrlFromAnUrl(string url)
+        {
+            return url.Split(":").ElementAt(0) + ":" + url.Split(":").ElementAt(1) + ":" + PCSPORT;
         }
     }
 

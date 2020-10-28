@@ -8,7 +8,7 @@ namespace PuppetMaster.Controllers.ServerDebugControllers
     {
         public static async Task<Empty> Execute(ConnectionManager connectionManager, string serverId)
         {
-            Server server = connectionManager.GetServer(serverId);
+            Domain.Server server = connectionManager.GetServer(serverId);
             return server.Stub.Crash(new Empty());
         }
     }

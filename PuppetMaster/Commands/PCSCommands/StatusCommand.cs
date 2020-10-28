@@ -29,12 +29,7 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            List<Empty> statusReplies = await StatusController.Execute(ConnectionManager);
-
-            foreach(Empty reply in statusReplies)
-            {
-                txtBoxOutput.AppendText(Environment.NewLine + "=> " + reply.ToString());
-            }
+            await StatusController.Execute(ConnectionManager);
 
             txtBoxOutput.AppendText(Environment.NewLine + "Status DONE.");
         }

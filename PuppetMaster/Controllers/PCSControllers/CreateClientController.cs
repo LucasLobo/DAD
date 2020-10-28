@@ -5,11 +5,17 @@ namespace PuppetMaster.Controllers.PCSControllers
 {
     class CreateClientController
     {
-        public static async Task Execute(ConnectionManager connectionManager, string username, string clientURL, string scriptFile, string partitions)
+        public static async Task Execute(ConnectionManager connectionManager, string username, string clientURL, string scriptFile, string servers, string partitions)
         {
-            PCS pcs = connectionManager.GetPCS(clientURL);
-            // TODO create request and send it
-            //pcs.Stub.Client(createClientRequest);
+            PCS pcs = connectionManager.GetPCS(connectionManager.GetPCSUrlFromAnUrl(clientURL));
+            ClientRequest createClientRequest = new ClientRequest()
+            {
+                Username = username,
+                ClientUrl = clientURL,
+                ScriptFile = scriptFile,
+                NetworkConfiguration = servers + partitions
+            };
+            pcs.Stub.Client(createClientRequest);
         }
     }
 }

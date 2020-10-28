@@ -20,14 +20,12 @@ namespace PuppetMaster.Commands
             ConnectionManager = connectionManager;
         }
 
-        public static int BASE_ARGUMENTS = 3;
+        public static int EXPECTED_ARGUMENTS = 3;
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            int serversNumber = Int32.Parse(arguments[0]);
-            int MAX_ARGUMENTS = BASE_ARGUMENTS + serversNumber;
-            if (arguments.Count != MAX_ARGUMENTS)
+            if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
 
@@ -35,8 +33,10 @@ namespace PuppetMaster.Commands
             string clientURL = arguments.ElementAt(1);
             string scriptFile = arguments.ElementAt(2);
             string partitions = SystemConfiguration.GetInstance().GetPartitionsArgument();
+            string servers = SystemConfiguration.GetInstance().GetServersArgument();
 
-            await CreateClientController.Execute(ConnectionManager, username, clientURL, scriptFile, partitions);
+            await CreateClientController.Execute(ConnectionManager, username, clientURL, scriptFile, servers, partitions);
+            ConnectionManager.SetNewClientConnection(arguments[1]);
             txtBoxOutput.AppendText(Environment.NewLine + "Client Created.");
         }
     }

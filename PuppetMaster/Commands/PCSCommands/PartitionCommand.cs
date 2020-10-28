@@ -15,11 +15,11 @@ namespace PuppetMaster.Commands
             txtBoxOutput = output;
         }
 
-        public static int BASE_ARGUMENTS = 2;
+        public static int EXPECTED_ARGUMENTS = 2;
         public override async Task ExecuteAsync(List<string> arguments)
         {
             int serversNumber = Int32.Parse(arguments[0]);
-            int MAX_ARGUMENTS = BASE_ARGUMENTS + serversNumber;
+            int MAX_ARGUMENTS = EXPECTED_ARGUMENTS + serversNumber;
             if (arguments.Count != MAX_ARGUMENTS)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");

@@ -24,19 +24,6 @@ namespace PuppetMaster.Commands
             }
 
             txtBoxOutput.AppendText(Environment.NewLine + "Replication Factor Configured.");
-            //try
-            //{
-            //    int r = int.Parse(arguments[0]);
-
-            //    // Dummy implementation
-            //    this.txtBoxOutput.AppendText(Environment.NewLine + "Replication Factor START...");
-            //    await Task.Delay(1000 * r);
-            //    this.txtBoxOutput.AppendText(Environment.NewLine + "Replication Factor END...");
-            //}
-            //catch (FormatException)
-            //{
-            //    this.txtBoxOutput.AppendText(Environment.NewLine + "Replication Factor argument must be an integer");
-            //}
         }
     }
 }

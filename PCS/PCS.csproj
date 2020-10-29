@@ -16,4 +16,8 @@
 	<Protobuf Include="..\Utils\protos\PuppetMasterPCSService.proto" ProtoRoot=".." GrpcServices="Server" />
   </ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Utils\Utils.csproj" />
+	</ItemGroup>
+
 </Project>

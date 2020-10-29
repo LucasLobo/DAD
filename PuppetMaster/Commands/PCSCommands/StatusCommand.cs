@@ -1,3 +1,6 @@
+using Google.Protobuf.WellKnownTypes;
+using PuppetMaster.Controllers.PCSControllers;
+using PuppetMaster.Domain;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,9 +12,12 @@ namespace PuppetMaster.Commands
     class StatusCommand : Command
     {
         private TextBox txtBoxOutput;
-        public StatusCommand(TextBox output) : base(true)
+
+        private readonly ConnectionManager ConnectionManager;
+        public StatusCommand(TextBox output, ConnectionManager connectionManager) : base(true)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
+            ConnectionManager = connectionManager;
         }
 
         public static int EXPECTED_ARGUMENTS = 0;
@@ -19,12 +25,13 @@ namespace PuppetMaster.Commands
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
 
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Status DONE.");
+            await StatusController.Execute(ConnectionManager);
+
+            txtBoxOutput.AppendText(Environment.NewLine + "Status DONE.");
         }
     }
 }

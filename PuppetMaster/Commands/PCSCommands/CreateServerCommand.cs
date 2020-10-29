@@ -1,3 +1,4 @@
+using PuppetMaster.Domain;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,24 +10,25 @@ namespace PuppetMaster.Commands
     class CreateServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        public CreateServerCommand(TextBox output) : base(true)
+        private ConnectionManager ConnectionManager;
+        public CreateServerCommand(TextBox output, ConnectionManager connectionManager) : base(true)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
+            ConnectionManager = connectionManager;
         }
 
-        public static int BASE_ARGUMENTS = 4;
+        public static int EXPECTED_ARGUMENTS = 4;
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            int serversNumber = Int32.Parse(arguments[0]);
-            int MAX_ARGUMENTS = BASE_ARGUMENTS + serversNumber;
-            if (arguments.Count != MAX_ARGUMENTS)
+            if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
-
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Partition DONE.");
+            
+            SystemConfiguration.GetInstance().AddServerConfig(string.Join(" ", arguments));
+            ConnectionManager.SetNewServerConnection(arguments[0], arguments[1]);
+            txtBoxOutput.AppendText(Environment.NewLine + "Server Configurated.");
         }
     }
 }

@@ -1,5 +1,8 @@
+using PuppetMaster.Controllers.PCSControllers;
+using PuppetMaster.Domain;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utils;
@@ -8,27 +11,33 @@ namespace PuppetMaster.Commands
 {
     class CreateClientCommand : Command
     {
+        private readonly ConnectionManager ConnectionManager;
+
         private TextBox txtBoxOutput;
-        public CreateClientCommand(TextBox output) : base(true)
+        public CreateClientCommand(TextBox output, ConnectionManager connectionManager) : base(true)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
+            ConnectionManager = connectionManager;
         }
 
-        public static int BASE_ARGUMENTS = 3;
+        public static int EXPECTED_ARGUMENTS = 3;
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            int serversNumber = Int32.Parse(arguments[0]);
-            int MAX_ARGUMENTS = BASE_ARGUMENTS + serversNumber;
-            if (arguments.Count != MAX_ARGUMENTS)
+            if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
                 return;
             }
 
-            // Dummy implementation
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Creating client...");
-            await Task.Delay(1000);
-            this.txtBoxOutput.AppendText(Environment.NewLine + "Done creating client...");
+            string username = arguments.ElementAt(0);
+            string clientURL = arguments.ElementAt(1);
+            string scriptFile = arguments.ElementAt(2);
+            string partitions = SystemConfiguration.GetInstance().GetPartitionsArgument();
+            string servers = SystemConfiguration.GetInstance().GetServersArgument();
+
+            await CreateClientController.Execute(ConnectionManager, username, clientURL, scriptFile, servers, partitions);
+            ConnectionManager.SetNewClientConnection(arguments[1]);
+            txtBoxOutput.AppendText(Environment.NewLine + "Client Created.");
         }
     }
 }

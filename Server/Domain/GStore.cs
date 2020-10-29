@@ -1,6 +1,8 @@
+using GStoreServer.Controllers;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using Utils;
 
 namespace GStoreServer
@@ -9,25 +11,24 @@ namespace GStoreServer
     {
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectReplica> DataStore;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockEnhancedSlim> ObjectLocks;
+        private readonly MasterReplicaService.MasterReplicaServiceClient Stub;
 
-        public GStore()
+        public GStore(MasterReplicaService.MasterReplicaServiceClient Stub)
         {
+            this.Stub = Stub ?? throw new ArgumentNullException("stub cannot be null");
             DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectReplica>();
             ObjectLocks = new ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockEnhancedSlim>();
         }
 
-        public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue)
+        public async Task Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue)
         {
             ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
             int lockId = objectLock.EnterWriteLock();
-            // send lock to replicas
-            // await response
-            // send update to replicas
-            // await response
-
-            AddOrUpdate(gStoreObjectIdentifier, newValue, true);
-
+            int remoteLockId = await LockController.Execute(Stub, gStoreObjectIdentifier);
+            GStoreObjectReplica gStoreObjectReplica = AddOrUpdate(gStoreObjectIdentifier, newValue, true);
             objectLock.ExitWriteLock(lockId);
+
+            await WriteReplicaController.Execute(Stub, gStoreObjectReplica.Object, remoteLockId);
         }
 
         public string Read(GStoreObjectIdentifier gStoreObjectIdentifier)
@@ -82,9 +83,9 @@ namespace GStoreServer
                 });
         }
 
-        private void AddOrUpdate(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, bool isMaster)
+        private GStoreObjectReplica AddOrUpdate(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, bool isMaster)
         {
-            DataStore.AddOrUpdate(gStoreObjectIdentifier,
+            return DataStore.AddOrUpdate(gStoreObjectIdentifier,
                 (id) =>
                 {
                     return new GStoreObjectReplica(new GStoreObject(id, newValue), isMaster);

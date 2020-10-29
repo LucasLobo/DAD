@@ -15,6 +15,7 @@
     </PackageReference>
     <Protobuf Include="..\Utils\protos\GStoreService.proto" ProtoRoot=".." GrpcServices="Server" />
     <Protobuf Include="..\Utils\protos\PuppetMasterServerService.proto" ProtoRoot=".." GrpcServices="Server" />
+    <Protobuf Include="..\Utils\protos\MasterReplicaService.proto" ProtoRoot=".." GrpcServices="Both" />
   </ItemGroup>
 
   <ItemGroup>

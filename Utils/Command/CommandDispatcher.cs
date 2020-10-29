@@ -18,24 +18,29 @@ namespace Utils
 
         public bool IsConcurrent(string line)
         {
-            List<string> splitLine = new List<String>(line.Split(" "));
-            string commandName = splitLine.ElementAt(0);
-            splitLine.RemoveAt(0);
-
+            string commandName = ExtractCommandName(line);
             Command command = GetCommand(commandName);
             return command.Concurrent;
         }
 
         public async Task ExecuteAsync(string line)
         {
-            List<string> splitLine = new List<String>(line.Split(" "));
-            string commandName = splitLine.ElementAt(0);
-            splitLine.RemoveAt(0);
-
+            SeparateCommandNameAndArguments(line, out List<string> splitLine, out string commandName);
             Command command = GetCommand(commandName);
             await command.ExecuteAsync(splitLine);
         }
 
+        private static void SeparateCommandNameAndArguments(string line, out List<string> splitLine, out string commandName)
+        {
+            splitLine = new List<string>(line.Split(" "));
+            commandName = ExtractCommandName(line);
+            splitLine.RemoveAt(0);
+        }
+
+        public static string ExtractCommandName(string line)
+        {
+            return line.Split(" ").ElementAt(0);
+        }
 
         public async Task ExecuteAllAsync(string[] lines)
         {
@@ -75,6 +80,19 @@ namespace Utils
                 throw new CommandNotRegisteredException($"Command '{commandName}' does not exist.");
             }
             return command;
+        }
+
+        public bool IsValidCommand(string commandName)
+        {
+            try
+            {
+                GetCommand(commandName);
+                return true;
+            }
+            catch (CommandNotRegisteredException)
+            {
+                return false;
+            }
         }
     }
 

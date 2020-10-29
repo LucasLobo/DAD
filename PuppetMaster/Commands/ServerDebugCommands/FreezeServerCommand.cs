@@ -1,6 +1,9 @@
 using Grpc.Core;
+using PuppetMaster.Controllers.ServerDebugControllers;
+using PuppetMaster.Domain;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utils;
@@ -10,11 +13,11 @@ namespace PuppetMaster.Commands
     class FreezeServerCommand : Command
     {
         private TextBox txtBoxOutput;
-        private PuppetMasterServerService.PuppetMasterServerServiceClient serverStub;
-        public FreezeServerCommand(TextBox output, PuppetMasterServerService.PuppetMasterServerServiceClient serverStub) : base(true)
+        private ConnectionManager ConnectionManager;
+        public FreezeServerCommand(TextBox output, ConnectionManager connectionManager) : base(true)
         {
-            this.txtBoxOutput = output;
-            this.serverStub = serverStub;
+            txtBoxOutput = output;
+            ConnectionManager = connectionManager;
         }
 
         public static int EXPECTED_ARGUMENTS = 1;
@@ -26,9 +29,12 @@ namespace PuppetMaster.Commands
                 return;
             }
 
+            string serverId = arguments.ElementAt(0);
+
             try
             {
-                await serverStub.FreezeAsync(new Google.Protobuf.WellKnownTypes.Empty());
+                txtBoxOutput.AppendText(Environment.NewLine + $"Freeze... {serverId}");
+                await FreezeServerController.Execute(ConnectionManager, serverId);
                 txtBoxOutput.AppendText(Environment.NewLine + "Freeze DONE.");
             }
             catch (RpcException e)

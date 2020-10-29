@@ -1,5 +1,6 @@
 using Grpc.Net.Client;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,15 +9,15 @@ namespace PuppetMaster.Domain
     class ConnectionManager
     {
         private static readonly int PCSPORT = 10000;
-        private readonly IDictionary<string, Server> serverSet;
-        private readonly IDictionary<string, Client> clientSet;
-        private readonly IDictionary<string, PCS> pcsSet;
+        private readonly ConcurrentDictionary<string, Server> serverSet;
+        private readonly ConcurrentDictionary<string, Client> clientSet;
+        private readonly ConcurrentDictionary<string, PCS> pcsSet;
 
         public ConnectionManager()
         {
-            serverSet = new Dictionary<string, Server>();
-            clientSet = new Dictionary<string, Client>();
-            pcsSet = new Dictionary<string, PCS>();
+            serverSet = new ConcurrentDictionary<string, Server>();
+            clientSet = new ConcurrentDictionary<string, Client>();
+            pcsSet = new ConcurrentDictionary<string, PCS>();
         }
 
         // Set NEW Connections
@@ -26,7 +27,7 @@ namespace PuppetMaster.Domain
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             PuppetMasterServerService.PuppetMasterServerServiceClient client =
                    new PuppetMasterServerService.PuppetMasterServerServiceClient(channel);
-            serverSet.Add(serverId, new Server(serverId, client));
+            serverSet.TryAdd(serverId, new Server(serverId, client));
 
             SetNewPCSConnection(url);
         }
@@ -36,7 +37,7 @@ namespace PuppetMaster.Domain
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             PuppetMasterClientService.PuppetMasterClientServiceClient client =
                 new PuppetMasterClientService.PuppetMasterClientServiceClient(channel);
-            clientSet.Add(url, new Client(client));
+            clientSet.TryAdd(url, new Client(client));
 
             SetNewPCSConnection(url);
         }
@@ -70,8 +71,8 @@ namespace PuppetMaster.Domain
 
         public Server GetServer(string serverId)
         {
-            serverSet.TryGetValue(serverId, out Server server);
-            if (server == null)
+            bool foundServer = serverSet.TryGetValue(serverId, out Server server);
+            if (!foundServer)
             {
                 throw new NodeBindException("Server '" + serverId + "' not found.");
 
@@ -81,8 +82,8 @@ namespace PuppetMaster.Domain
 
         public Client GetClient(string clientURL)
         {
-            clientSet.TryGetValue(clientURL, out Client client);
-            if (client == null)
+            bool foundClient = clientSet.TryGetValue(clientURL, out Client client);
+            if (!foundClient)
             {
                 throw new NodeBindException("Client '" + clientURL + "' not found.");
 
@@ -92,8 +93,8 @@ namespace PuppetMaster.Domain
 
         public PCS GetPCS(string pcsURL)
         {
-            pcsSet.TryGetValue(pcsURL, out PCS pcs);
-            if (pcs == null)
+            bool foundPCS = pcsSet.TryGetValue(pcsURL, out PCS pcs);
+            if (!foundPCS)
             {
                 throw new NodeBindException("PCS '" + pcsURL + "' not found.");
 

@@ -27,6 +27,7 @@ namespace PCS
                 FileName = CLIENT_LOCATION,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
+                Arguments = $"{request.ScriptFile}"
                 //Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile}"
             };
             Process exeClientProcess = Process.Start(clientInfo);

@@ -80,6 +80,21 @@ namespace Utils
         {
             TServer server = GetServer(serverId);
             server.DeclareDead();
+
+            // todo
+            foreach (KeyValuePair<string, Partition> partitionPair in Partitions)
+            {
+                Partition partition = partitionPair.Value;
+
+                if (partition.MasterId == serverId)
+                {
+
+                }
+                else if (partition.Contains(serverId))
+                {
+                    
+                }
+            }
         }
     }
 

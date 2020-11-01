@@ -7,6 +7,7 @@ using Google.Protobuf.WellKnownTypes;
 using Utils;
 using Grpc.Core;
 using System.Diagnostics;
+using Grpc.Net.Client;
 
 namespace Client
 {
@@ -25,8 +26,8 @@ namespace Client
 
         public static ConnectionManager CreateConnectionManager()
         {
-            ConnectionManager connectionManager = new ConnectionManager();
-            connectionManager.PrintPartitions();
+            ConnectionManager connectionManager = CreateClientConnectionManager();
+            Console.WriteLine(connectionManager);
             Console.WriteLine();
             return connectionManager;
         }
@@ -107,6 +108,43 @@ namespace Client
                 Console.WriteLine(e.Message);
                 return;
             }
+        }
+
+        private static ConnectionManager CreateClientConnectionManager()
+        {
+            int serverNumber = 5;
+            int partitionSize = 3;
+
+            IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
+            IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
+            for (int i = 1; i <= serverNumber; i++)
+            {
+                string serverId = "s-" + i;
+                int port = 8080 + i;
+                string address = "http://localhost:" + port;
+                GrpcChannel channel = GrpcChannel.ForAddress(address);
+                GStoreService.GStoreServiceClient stub = new GStoreService.GStoreServiceClient(channel);
+                Domain.Server server = new Domain.Server(serverId, stub);
+                servers.Add(serverId, server);
+            }
+
+            for (int i = 1; i <= serverNumber; i++)
+            {
+                string masterId = "s-" + i;
+                ISet<string> partitionServerSet = new HashSet<string>();
+
+                for (int j = 1; j < partitionSize; j++)
+                {
+                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
+                    partitionServerSet.Add(serverId);
+                }
+
+                string partitionId = "part-" + i;
+                Partition partition = new Partition(partitionId, masterId, partitionServerSet);
+                partitions.Add(partitionId, partition);
+            }
+
+            return new ConnectionManager(servers, partitions);
         }
     }
 }

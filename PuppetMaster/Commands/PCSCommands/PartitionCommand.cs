@@ -9,8 +9,8 @@ namespace PuppetMaster.Commands
 {
     class PartitionCommand : Command
     {
-        private TextBox txtBoxOutput;
-        public PartitionCommand(TextBox output) : base(true)
+        private readonly TextBox txtBoxOutput;
+        public PartitionCommand(TextBox output) : base(false)
         {
             txtBoxOutput = output;
         }
@@ -18,16 +18,27 @@ namespace PuppetMaster.Commands
         public static int EXPECTED_ARGUMENTS = 2;
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            int serversNumber = Int32.Parse(arguments[0]);
-            int MAX_ARGUMENTS = EXPECTED_ARGUMENTS + serversNumber;
-            if (arguments.Count != MAX_ARGUMENTS)
+            try
             {
-                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + MAX_ARGUMENTS + " arguments but found " + arguments.Count + ".");
-                return;
-            }
+                int serversNumber = Int32.Parse(arguments[0]);
+                int MAX_ARGUMENTS = EXPECTED_ARGUMENTS + serversNumber;
+                if (arguments.Count != MAX_ARGUMENTS)
+                {
+                    throw new ApplySystemConfigurationException($"Expected {MAX_ARGUMENTS} arguments but found {arguments.Count}.");
+                }
 
-            SystemConfiguration.GetInstance().AddPartitionConfig(string.Join(" ", arguments));
-            txtBoxOutput.AppendText(Environment.NewLine + "Partition Configurated.");
+                SystemConfiguration.GetInstance().AddPartitionConfig(string.Join(" ", arguments));
+                txtBoxOutput.AppendText(Environment.NewLine + "Partition Configured.");
+            }
+            catch (ApplySystemConfigurationException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                throw new ApplySystemConfigurationException("Create partition command", e);
+            }
+            
         }
     }
 }

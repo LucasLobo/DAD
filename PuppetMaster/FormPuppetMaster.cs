@@ -3,6 +3,7 @@ using PuppetMaster.Commands;
 using PuppetMaster.Commands.PCSCommands;
 using PuppetMaster.Domain;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utils;
@@ -17,12 +18,33 @@ namespace PuppetMaster
 
         // always starts with the configuration
         private static bool isConfiguring = true;
+        private static bool unhandledException = false;
 
         public FormPuppetMaster()
         {
             InitializeComponent();
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            txtBoxOutput.AppendText("Output:");
             RegisterCommands();
+        }
+
+        private void FatalException(Exception e, string title = "Unhandled Exception")
+        {
+            txtBoxCommand.BackColor = txtBoxCommand.BackColor; // without this line it doesn't work for some reason
+            txtBoxCommand.ForeColor = System.Drawing.Color.Red;
+            txtBoxCommand.Text = title + " - shutdown servers / clients and restart.";
+
+            txtBoxOutput.AppendText(Environment.NewLine + Environment.NewLine);
+            txtBoxOutput.AppendText("EXCEPTION:");
+            txtBoxOutput.AppendText(Environment.NewLine + e.ToString());
+            unhandledException = true;
+            SetReadOnly(true);
+        }
+
+        private void SetReadOnly(bool option)
+        {
+            txtBoxCommand.ReadOnly = option || unhandledException;
+            txtBoxScriptLocation.ReadOnly = option || unhandledException;
         }
 
         private void txtBoxCommand_KeyPress(object sender, KeyPressEventArgs e)
@@ -37,64 +59,87 @@ namespace PuppetMaster
         private async void btnRunScript_Click(object sender, EventArgs e)
         {
             string filename = txtBoxScriptLocation.Text;
-            if (String.IsNullOrEmpty(filename)) return;
+            if (string.IsNullOrEmpty(filename)) return;
 
             string[] lines;
+            SetReadOnly(true);
             txtBoxScriptLocation.Clear();
             try
             {
-                lines = System.IO.File.ReadAllLines(filename);
+                List<Task> tasks = new List<Task>();
+                lines = System.IO.File.ReadAllLines(filename.Trim());
 
-                for (int i = 0; i < lines.Length; i++)
+                foreach (string line in lines)
                 {
-                    await ExecuteCommand(lines[i]);
+                    bool isConcurrent = CommandDispatcher.IsConcurrent(line);
+
+                    if (isConcurrent)
+                    {
+                        Task task = ExecuteCommand(line);
+                        tasks.Add(task);
+                    }
+                    else
+                    {
+                        await ExecuteCommand(line);
+                    }
                 }
+                await Task.WhenAll(tasks);
             }
             catch (System.IO.FileNotFoundException fileNotFoundException)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + "ERROR: File " + filename + " not found in current directory.");
                 txtBoxOutput.AppendText(Environment.NewLine + fileNotFoundException.Message);
-                return;
             }
             catch (CommandNotRegisteredException exception)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
+                if (isConfiguring) FatalException(exception, "Configuration error.");
+                else txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
+            }
+            catch (ApplySystemConfigurationException exception)
+            {
+                FatalException(exception);
             }
             catch (Exception exception)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
-                return;
+                // Unhandled exception
+                FatalException(exception);
             }
+            SetReadOnly(false);
         }
 
         private async void btnRunCommand_Click(object sender, EventArgs e)
         {
             string inputLine = txtBoxCommand.Text.ToLower();
-            if (String.IsNullOrEmpty(inputLine)) return;
+            if (String.IsNullOrWhiteSpace(inputLine))
+            {
+                txtBoxOutput.AppendText(Environment.NewLine);
+                return;
+            }
 
             // clean the command textbox
-            txtBoxCommand.ReadOnly = true;
+            SetReadOnly(true);
             txtBoxCommand.Clear();
             bool isConcurrent;
             try
             {
                 isConcurrent = CommandDispatcher.IsConcurrent(inputLine);
-                if (isConcurrent) txtBoxCommand.ReadOnly = false;
+                if (isConcurrent) SetReadOnly(false);
                 await ExecuteCommand(inputLine);
-            }
-            catch (PreprocessingException exception)
-            {
-                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
-                return;
             }
             catch (CommandNotRegisteredException exception)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
             }
-            finally
+            catch (ApplySystemConfigurationException exception)
             {
-                txtBoxCommand.ReadOnly = false;
+                FatalException(exception);
             }
+            catch (Exception exception)
+            {
+                // Unhandled exception
+                FatalException(exception);
+            }
+            SetReadOnly(false);
         }
 
         private static async Task ExecuteCommand(string inputLine)

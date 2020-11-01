@@ -8,10 +8,10 @@ namespace PuppetMaster.Commands
 {
     class ClearCommand : Command
     {
-        private TextBox txtBoxOutput;
+        private readonly TextBox txtBoxOutput;
         public ClearCommand(TextBox output) : base(false)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
         }
 
         public static int EXPECTED_ARGUMENTS = 0;
@@ -19,11 +19,11 @@ namespace PuppetMaster.Commands
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + $"Expected {EXPECTED_ARGUMENTS} arguments but found {arguments.Count}.");
                 return;
             }
 
-            this.txtBoxOutput.Clear();
+            txtBoxOutput.Clear();
         }
     }
 }

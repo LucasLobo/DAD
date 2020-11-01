@@ -9,9 +9,9 @@ namespace PuppetMaster.Commands
 {
     class CreateServerCommand : Command
     {
-        private TextBox txtBoxOutput;
-        private ConnectionManager ConnectionManager;
-        public CreateServerCommand(TextBox output, ConnectionManager connectionManager) : base(true)
+        private readonly TextBox txtBoxOutput;
+        private readonly ConnectionManager ConnectionManager;
+        public CreateServerCommand(TextBox output, ConnectionManager connectionManager) : base(false)
         {
             txtBoxOutput = output;
             ConnectionManager = connectionManager;
@@ -22,13 +22,20 @@ namespace PuppetMaster.Commands
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + "Expected a minimum of " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
-                return;
+                throw new ApplySystemConfigurationException($"Expected {EXPECTED_ARGUMENTS} arguments but found {arguments.Count}.");
+            }
+
+            try
+            {
+                SystemConfiguration.GetInstance().AddServerConfig(string.Join(" ", arguments));
+                ConnectionManager.SetNewServerConnection(arguments[0], arguments[1]);
+                txtBoxOutput.AppendText(Environment.NewLine + "Server Configured.");
+            }
+            catch (Exception e)
+            {
+                throw new ApplySystemConfigurationException("Create server command", e);
             }
             
-            SystemConfiguration.GetInstance().AddServerConfig(string.Join(" ", arguments));
-            ConnectionManager.SetNewServerConnection(arguments[0], arguments[1]);
-            txtBoxOutput.AppendText(Environment.NewLine + "Server Configurated.");
         }
     }
 }

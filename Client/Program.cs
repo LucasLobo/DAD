@@ -30,6 +30,16 @@ namespace Client
             return connectionManager;
         }
 
+        public static void PressToExit()
+        {
+            ConsoleKeyInfo keyInfo;
+            do
+            {
+                keyInfo = Console.ReadKey();
+            }
+            while (keyInfo.Key != ConsoleKey.Enter);
+        }
+
         static async Task Main(string[] args)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -37,6 +47,7 @@ namespace Client
             if (args.Length == 0)
             {
                 Console.WriteLine("ERROR: Expected a script name but received none.");
+                PressToExit();
                 return;
             }
 
@@ -57,6 +68,7 @@ namespace Client
             {
                 Console.WriteLine("ERROR: File " + filename + " not found in current directory.");
                 Console.WriteLine(e);
+                PressToExit();
                 return;
             }
 
@@ -77,7 +89,6 @@ namespace Client
                 };
                 Console.WriteLine("Client listening on port " + Port);
                 
-
                 server.Start();
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
@@ -93,19 +104,16 @@ namespace Client
                 await dispatcher;
 
                 Console.WriteLine("Press ENTER to stop the client...");
-                ConsoleKeyInfo keyInfo;
-                do
-                {
-                    keyInfo = Console.ReadKey();
-                }
-                while (keyInfo.Key != ConsoleKey.Enter);
-                    
+                PressToExit();
+
+
                 Console.WriteLine("\nShutting down...");
                 server.ShutdownAsync().Wait();
             }
-            catch (PreprocessingException e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                PressToExit();
                 return;
             }
         }

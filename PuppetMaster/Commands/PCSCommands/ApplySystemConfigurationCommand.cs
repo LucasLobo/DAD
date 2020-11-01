@@ -12,7 +12,7 @@ namespace PuppetMaster.Commands.PCSCommands
     {
         private readonly ConnectionManager ConnectionManager;
 
-        private TextBox txtBoxOutput;
+        private readonly TextBox txtBoxOutput;
         public ApplySystemConfigurationCommand(TextBox output, ConnectionManager connectionManager) : base(true)
         {
             txtBoxOutput = output;
@@ -21,20 +21,30 @@ namespace PuppetMaster.Commands.PCSCommands
 
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            List<string> serverLines = SystemConfiguration.GetInstance().GetServerLines();
-            if (serverLines == null || serverLines.Count < 1)
+            try
             {
-                txtBoxOutput.AppendText(Environment.NewLine + "No configuration provided. Please configure the system first.");
-                return;
+                List<string> serverLines = SystemConfiguration.GetInstance().GetServerLines();
+                if (serverLines == null || serverLines.Count == 0)
+                {
+                    throw new ApplySystemConfigurationException("No configuration provided. Please configure the system first.");
+                }
+
+                string servers = SystemConfiguration.GetInstance().GetServersArgument();
+                string partitions = SystemConfiguration.GetInstance().GetPartitionsArgument();
+
+                await ApplySystemConfigurationController.Execute(ConnectionManager, serverLines, servers, partitions);
+
+                txtBoxOutput.AppendText(Environment.NewLine + "System Configuration Applied.");
             }
-
+            catch (ApplySystemConfigurationException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                throw new ApplySystemConfigurationException("Apply system configuration (internal command)", e);
+            }
             
-            string servers = SystemConfiguration.GetInstance().GetServersArgument();
-            string partitions = SystemConfiguration.GetInstance().GetPartitionsArgument();
-
-            await ApplySystemConfigurationController.Execute(ConnectionManager, serverLines, servers, partitions);
-
-            txtBoxOutput.AppendText(Environment.NewLine + "System Configuration Applied.");
         }
     }
 }

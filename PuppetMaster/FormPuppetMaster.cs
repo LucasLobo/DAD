@@ -3,6 +3,7 @@ using PuppetMaster.Commands;
 using PuppetMaster.Commands.PCSCommands;
 using PuppetMaster.Domain;
 using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utils;
 
@@ -43,20 +44,27 @@ namespace PuppetMaster
             try
             {
                 lines = System.IO.File.ReadAllLines(filename);
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    await ExecuteCommand(lines[i]);
+                }
             }
             catch (System.IO.FileNotFoundException fileNotFoundException)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + "ERROR: File " + filename + " not found in current directory.");
-                txtBoxOutput.AppendText(Environment.NewLine + fileNotFoundException);
+                txtBoxOutput.AppendText(Environment.NewLine + fileNotFoundException.Message);
                 return;
+            }
+            catch (CommandNotRegisteredException exception)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
             }
             catch (Exception exception)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + exception);
+                txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
                 return;
             }
-
-            await CommandDispatcher.ExecuteAllAsync(lines);
         }
 
         private async void btnRunCommand_Click(object sender, EventArgs e)
@@ -72,15 +80,7 @@ namespace PuppetMaster
             {
                 isConcurrent = CommandDispatcher.IsConcurrent(inputLine);
                 if (isConcurrent) txtBoxCommand.ReadOnly = false;
-                //hard style
-                string commandName = CommandDispatcher.ExtractCommandName(inputLine);
-                if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("partition") && !commandName.Equals("server")
-                    && !commandName.Equals("help") && !commandName.Equals("wait") && !commandName.Equals("quit") && !commandName.Equals("clear"))
-                {
-                    isConfiguring = false;
-                    await CommandDispatcher.ExecuteAsync("applysystemconfiguration");
-                }
-                await CommandDispatcher.ExecuteAsync(inputLine);
+                await ExecuteCommand(inputLine);
             }
             catch (PreprocessingException exception)
             {
@@ -95,6 +95,19 @@ namespace PuppetMaster
             {
                 txtBoxCommand.ReadOnly = false;
             }
+        }
+
+        private static async Task ExecuteCommand(string inputLine)
+        {
+            //hard style
+            string commandName = CommandDispatcher.ExtractCommandName(inputLine);
+            if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("partition") && !commandName.Equals("server")
+                && !commandName.Equals("help") && !commandName.Equals("wait") && !commandName.Equals("quit") && !commandName.Equals("clear"))
+            {
+                isConfiguring = false;
+                await CommandDispatcher.ExecuteAsync("applysystemconfiguration");
+            }
+            await CommandDispatcher.ExecuteAsync(inputLine);
         }
 
         private void RegisterCommands()

@@ -92,8 +92,14 @@ namespace Client
 
                 await dispatcher;
 
-                Console.WriteLine("Press any key to stop the client...");
-                Console.ReadKey();
+                Console.WriteLine("Press ENTER to stop the client...");
+                ConsoleKeyInfo keyInfo;
+                do
+                {
+                    keyInfo = Console.ReadKey();
+                }
+                while (keyInfo.Key != ConsoleKey.Enter);
+                    
                 Console.WriteLine("\nShutting down...");
                 server.ShutdownAsync().Wait();
             }

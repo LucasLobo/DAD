@@ -102,7 +102,7 @@ namespace PuppetMaster
             //hard style
             string commandName = CommandDispatcher.ExtractCommandName(inputLine);
             if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("partition") && !commandName.Equals("server")
-                && !commandName.Equals("help") && !commandName.Equals("wait") && !commandName.Equals("quit") && !commandName.Equals("clear"))
+                && !commandName.Equals("help") && !commandName.Equals("quit") && !commandName.Equals("clear"))
             {
                 isConfiguring = false;
                 await CommandDispatcher.ExecuteAsync("applysystemconfiguration");

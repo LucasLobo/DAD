@@ -6,6 +6,7 @@ using Client.Domain;
 using Google.Protobuf.WellKnownTypes;
 using Utils;
 using Grpc.Core;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -82,15 +83,19 @@ namespace Client
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
+                var timer = new Stopwatch();
+                timer.Start();
                 Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
-                for (int i = 0; i < 15; i++)
-                {
-                    Console.WriteLine("---");
-                    await Task.Delay(500);
-                }
+                //for (int i = 0; i < 15; i++)
+                //{
+                //    Console.WriteLine("---");
+                //    await Task.Delay(500);
+                //}
 
                 await dispatcher;
+                timer.Stop();
+                Console.WriteLine(timer.ElapsedMilliseconds);
 
                 Console.WriteLine("Press any key to stop the client...");
                 Console.ReadKey();

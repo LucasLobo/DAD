@@ -4,7 +4,7 @@ using System;
 using System.Threading.Tasks;
 using Utils;
 
-namespace GStoreServer
+namespace GStoreServer.Services
 {
     class ServerServiceImpl : GStoreService.GStoreServiceBase
     {
@@ -34,15 +34,15 @@ namespace GStoreServer
 
         public override Task<Empty> Write(GStoreWriteRequest request, ServerCallContext context)
         {
-            return Task.FromResult(ExecuteWrite(request));
+            return ExecuteWrite(request);
         }
 
-        private Empty ExecuteWrite(GStoreWriteRequest request)
+        private async Task<Empty> ExecuteWrite(GStoreWriteRequest request)
         {
             Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier} Value: {request.Object.Value}");
 
             GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.Object.ObjectIdentifier.PartitionId, request.Object.ObjectIdentifier.ObjectId);
-            gStore.Write(gStoreObjectIdentifier, request.Object.Value);
+            await gStore.Write(gStoreObjectIdentifier, request.Object.Value);
 
             return new Empty();
         }

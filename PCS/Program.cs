@@ -17,7 +17,7 @@ namespace PCS
             };
             server.Start();
             Console.WriteLine("PCS listening on port " + PORT);
-            Console.WriteLine("Press ENTER to stop the client...");
+            Console.WriteLine("Press ENTER to stop the PCS...");
             ConsoleKeyInfo keyInfo;
             do
             {

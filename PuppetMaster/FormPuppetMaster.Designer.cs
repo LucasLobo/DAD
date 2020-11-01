@@ -1,4 +1,4 @@
-﻿namespace PuppetMaster
+namespace PuppetMaster
 {
     partial class FormPuppetMaster
     {

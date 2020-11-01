@@ -49,7 +49,7 @@ namespace PuppetMaster.Domain
             GrpcChannel channel = GrpcChannel.ForAddress(newUrl);
             PuppetMasterPCSService.PuppetMasterPCSServiceClient client =
                 new PuppetMasterPCSService.PuppetMasterPCSServiceClient(channel);
-            pcsSet[newUrl] = new PCS(client);
+            pcsSet.TryAdd(newUrl, new PCS(client));
         }
 
         // Get Connections

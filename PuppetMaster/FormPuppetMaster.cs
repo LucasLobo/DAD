@@ -33,9 +33,25 @@ namespace PuppetMaster
             }
         }
 
-        private void btnRunScript_Click(object sender, EventArgs e)
+        private async void btnRunScript_Click(object sender, EventArgs e)
         {
-            //TODO
+            string filename = txtBoxScriptLocation.Text;
+            if (String.IsNullOrEmpty(filename)) return;
+
+            string[] lines;
+            txtBoxScriptLocation.Clear();
+            try
+            {
+                lines = System.IO.File.ReadAllLines(filename);
+            }
+            catch (System.IO.FileNotFoundException exception)
+            {
+                txtBoxOutput.AppendText(Environment.NewLine + "ERROR: File " + filename + " not found in current directory.");
+                txtBoxOutput.AppendText(Environment.NewLine + exception);
+                return;
+            }
+
+            await CommandDispatcher.ExecuteAllAsync(lines);
         }
 
         private async void btnRunCommand_Click(object sender, EventArgs e)

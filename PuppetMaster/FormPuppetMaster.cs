@@ -44,9 +44,14 @@ namespace PuppetMaster
             {
                 lines = System.IO.File.ReadAllLines(filename);
             }
-            catch (System.IO.FileNotFoundException exception)
+            catch (System.IO.FileNotFoundException fileNotFoundException)
             {
                 txtBoxOutput.AppendText(Environment.NewLine + "ERROR: File " + filename + " not found in current directory.");
+                txtBoxOutput.AppendText(Environment.NewLine + fileNotFoundException);
+                return;
+            }
+            catch (Exception exception)
+            {
                 txtBoxOutput.AppendText(Environment.NewLine + exception);
                 return;
             }

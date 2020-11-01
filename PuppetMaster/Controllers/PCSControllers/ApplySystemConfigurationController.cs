@@ -19,7 +19,7 @@ namespace PuppetMaster.Controllers.PCSControllers
                 PCS pcs = connectionManager.GetPCS(connectionManager.GetPCSUrlFromAnUrl(serverLineSplit[1]));
                 ServerRequest serverRequest = new ServerRequest()
                 {
-                    ServerId = int.Parse(serverLineSplit[0]),
+                    ServerId = serverLineSplit[0],
                     Url = serverLineSplit[1],
                     MinDelay = int.Parse(serverLineSplit[2]),
                     MaxDelay = int.Parse(serverLineSplit[3]),

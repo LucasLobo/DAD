@@ -32,6 +32,12 @@ namespace GStoreServer
             return Task.FromResult(new Empty());
         }
 
+        public override Task<Empty> Status(Empty request, ServerCallContext context)
+        {
+            Console.WriteLine("STATUS");
+            return Task.FromResult(new Empty());
+        }
+
         public override Task<Empty> Unfreeze(Empty request, ServerCallContext context)
         {
             Console.WriteLine("UNFREEZE");

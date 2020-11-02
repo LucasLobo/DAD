@@ -9,10 +9,10 @@ namespace PuppetMaster.Commands
 {
     class HelpCommand : Command
     {
-        private TextBox txtBoxOutput;
+        private readonly TextBox txtBoxOutput;
         public HelpCommand(TextBox output) : base(false)
         {
-            this.txtBoxOutput = output;
+            txtBoxOutput = output;
         }
 
         public static int EXPECTED_ARGUMENTS = 0;
@@ -21,7 +21,7 @@ namespace PuppetMaster.Commands
 
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
-                this.txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
+                txtBoxOutput.AppendText(Environment.NewLine + $"Expected {EXPECTED_ARGUMENTS} arguments but found {arguments.Count}.");
                 return;
             }
 
@@ -30,9 +30,9 @@ namespace PuppetMaster.Commands
 
         private void PrintHelpCommands()
         {
-            this.txtBoxOutput.AppendText(
+            txtBoxOutput.AppendText(
                     Environment.NewLine + "Possible Commands for PCSs:" +
-                    Environment.NewLine + "1. replicationfactor r" +
+                    Environment.NewLine + "1. replicationfactor r (not used)" +
                     Environment.NewLine + "2. server server_id URL min_delay max_delay" +
                     Environment.NewLine + "3. partition r partition_name server_id_1 (...) server_id_r" +
                     Environment.NewLine + "4. client username client_URL script_file" +

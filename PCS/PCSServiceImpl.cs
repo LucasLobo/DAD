@@ -2,6 +2,8 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace PCS
@@ -21,19 +23,26 @@ namespace PCS
         private Empty ExecuteClient(ClientRequest request)
         {
             Console.WriteLine($"Create Client request-> Username: {request.Username} Client_URL: {request.ClientUrl} Script: {request.ScriptFile}");
-
-            ProcessStartInfo clientInfo = new ProcessStartInfo
+            try
             {
-                FileName = CLIENT_LOCATION,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                Arguments = $"{request.ScriptFile}"
-                //Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile}"
-            };
-            Process exeClientProcess = Process.Start(clientInfo);
+                var filepath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), CLIENT_LOCATION);
+                ProcessStartInfo clientInfo = new ProcessStartInfo
+                {
+                    FileName = filepath,
+                    UseShellExecute = true,
+                    Arguments = $"{request.ScriptFile}"
+                    //Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile}"
+                };
+                Process exeClientProcess = Process.Start(clientInfo);
 
-            Console.WriteLine($"Create Client DONE");
-            return new Empty();
+                Console.WriteLine($"Create Client DONE");
+                return new Empty();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw e;
+            }
         }
 
         public override Task<Empty> Server(ServerRequest request, ServerCallContext context)
@@ -43,19 +52,26 @@ namespace PCS
 
         private Empty ExecuteServer(ServerRequest request)
         {
-            Console.WriteLine($"Create Server request-> Server_ID: {request.ServerId} URL: {request.Url} Min-Delay: {request.MinDelay} Max-Delay: {request.MaxDelay}");
-
-            ProcessStartInfo serverInfo = new ProcessStartInfo
+            try
             {
-                FileName = SERVER_LOCATION,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                //Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay}"
-            };
-            Process exeServerProcess = Process.Start(serverInfo);
-
-            Console.WriteLine($"Create Server DONE");
-            return new Empty();
+                Console.WriteLine($"Create Server request-> Server_ID: {request.ServerId} URL: {request.Url} Min-Delay: {request.MinDelay} Max-Delay: {request.MaxDelay}");
+                var filepath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), SERVER_LOCATION);
+            
+                ProcessStartInfo serverInfo = new ProcessStartInfo
+                {
+                    FileName = filepath,
+                    UseShellExecute = true,
+                    //Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay}"
+                };
+                Process exeServerProcess = Process.Start(serverInfo);
+                Console.WriteLine($"Create Server DONE");
+                return new Empty();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw e;
+            }
         }
     }
 }

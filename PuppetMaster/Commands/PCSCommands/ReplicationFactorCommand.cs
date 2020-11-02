@@ -9,21 +9,14 @@ namespace PuppetMaster.Commands
     class ReplicationFactorCommand : Command
     {
         private TextBox txtBoxOutput;
-        public ReplicationFactorCommand(TextBox output) : base(true)
+        public ReplicationFactorCommand(TextBox output) : base(false)
         {
             txtBoxOutput = output;
         }
 
-        public static int EXPECTED_ARGUMENTS = 1;
         public override async Task ExecuteAsync(List<string> arguments)
         {
-            if (arguments.Count != EXPECTED_ARGUMENTS)
-            {
-                txtBoxOutput.AppendText(Environment.NewLine + "Expected " + EXPECTED_ARGUMENTS + " arguments but found " + arguments.Count + ".");
-                return;
-            }
-
-            txtBoxOutput.AppendText(Environment.NewLine + "Replication Factor Configured.");
+            txtBoxOutput.AppendText(Environment.NewLine + "Unused command.");
         }
     }
 }

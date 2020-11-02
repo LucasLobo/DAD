@@ -1,4 +1,4 @@
-﻿namespace PuppetMaster
+namespace PuppetMaster
 {
     partial class FormPuppetMaster
     {
@@ -38,18 +38,20 @@
             // txtBoxScriptLocation
             // 
             this.txtBoxScriptLocation.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtBoxScriptLocation.Location = new System.Drawing.Point(276, 14);
+            this.txtBoxScriptLocation.Location = new System.Drawing.Point(315, 19);
+            this.txtBoxScriptLocation.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtBoxScriptLocation.Name = "txtBoxScriptLocation";
             this.txtBoxScriptLocation.PlaceholderText = "Enter the script name";
-            this.txtBoxScriptLocation.Size = new System.Drawing.Size(487, 27);
+            this.txtBoxScriptLocation.Size = new System.Drawing.Size(556, 32);
             this.txtBoxScriptLocation.TabIndex = 2;
             // 
             // btnRunScript
             // 
             this.btnRunScript.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btnRunScript.Location = new System.Drawing.Point(34, 12);
+            this.btnRunScript.Location = new System.Drawing.Point(39, 16);
+            this.btnRunScript.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnRunScript.Name = "btnRunScript";
-            this.btnRunScript.Size = new System.Drawing.Size(209, 29);
+            this.btnRunScript.Size = new System.Drawing.Size(239, 39);
             this.btnRunScript.TabIndex = 0;
             this.btnRunScript.Text = "Run Script";
             this.btnRunScript.UseVisualStyleBackColor = true;
@@ -59,21 +61,25 @@
             // 
             this.txtBoxOutput.BackColor = System.Drawing.SystemColors.InfoText;
             this.txtBoxOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtBoxOutput.Enabled = false;
             this.txtBoxOutput.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.txtBoxOutput.ForeColor = System.Drawing.SystemColors.Window;
-            this.txtBoxOutput.Location = new System.Drawing.Point(34, 108);
+            this.txtBoxOutput.HideSelection = false;
+            this.txtBoxOutput.Location = new System.Drawing.Point(39, 144);
+            this.txtBoxOutput.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtBoxOutput.Multiline = true;
             this.txtBoxOutput.Name = "txtBoxOutput";
-            this.txtBoxOutput.Size = new System.Drawing.Size(729, 330);
+            this.txtBoxOutput.ReadOnly = true;
+            this.txtBoxOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtBoxOutput.Size = new System.Drawing.Size(833, 440);
             this.txtBoxOutput.TabIndex = 1;
             // 
             // btnRunCommand
             // 
             this.btnRunCommand.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btnRunCommand.Location = new System.Drawing.Point(34, 59);
+            this.btnRunCommand.Location = new System.Drawing.Point(39, 79);
+            this.btnRunCommand.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnRunCommand.Name = "btnRunCommand";
-            this.btnRunCommand.Size = new System.Drawing.Size(209, 29);
+            this.btnRunCommand.Size = new System.Drawing.Size(239, 39);
             this.btnRunCommand.TabIndex = 0;
             this.btnRunCommand.Text = "Run Command";
             this.btnRunCommand.UseVisualStyleBackColor = true;
@@ -82,23 +88,25 @@
             // txtBoxCommand
             // 
             this.txtBoxCommand.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtBoxCommand.Location = new System.Drawing.Point(276, 61);
+            this.txtBoxCommand.Location = new System.Drawing.Point(315, 81);
+            this.txtBoxCommand.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtBoxCommand.Name = "txtBoxCommand";
             this.txtBoxCommand.PlaceholderText = "Use \'help\' command if you need help";
-            this.txtBoxCommand.Size = new System.Drawing.Size(487, 27);
+            this.txtBoxCommand.Size = new System.Drawing.Size(556, 32);
             this.txtBoxCommand.TabIndex = 2;
             this.txtBoxCommand.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtBoxCommand_KeyPress);
             // 
             // FormPuppetMaster
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(914, 600);
             this.Controls.Add(this.txtBoxCommand);
             this.Controls.Add(this.btnRunCommand);
             this.Controls.Add(this.txtBoxOutput);
             this.Controls.Add(this.btnRunScript);
             this.Controls.Add(this.txtBoxScriptLocation);
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "FormPuppetMaster";
             this.Text = "PuppetMaster";
             this.ResumeLayout(false);

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client.Commands;
 using Client.Domain;
-using Google.Protobuf.WellKnownTypes;
 using Utils;
 using Grpc.Core;
 using System.Diagnostics;
 using Grpc.Net.Client;
+using System.Linq;
 
 namespace Client
 {
@@ -24,9 +24,9 @@ namespace Client
             commandDispatcher.Register("wait", new WaitCommand());
         }
 
-        public static ConnectionManager CreateConnectionManager()
+        public static ConnectionManager CreateConnectionManager(string networkConfiguration)
         {
-            ConnectionManager connectionManager = CreateClientConnectionManager();
+            ConnectionManager connectionManager = CreateClientConnectionManager(networkConfiguration);
             Console.WriteLine(connectionManager);
             Console.WriteLine();
             return connectionManager;
@@ -59,7 +59,13 @@ namespace Client
                 Console.WriteLine();
             }
 
-            String filename = args[0];
+            string username = args[0];
+            string url = args[1];
+            string[] protocolAndHostnameAndPort = url.Split("://");
+            string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+            int port = Int32.Parse(hotnameAndPort[1]);
+            string filename = args[2];
+            string networkConfiguration = args[3];
 
             string[] lines;
             try
@@ -75,21 +81,20 @@ namespace Client
             }
 
             CommandDispatcher commandDispatcher = new CommandDispatcher();
-            ConnectionManager connectionManager = CreateConnectionManager();
+            ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
             RegisterCommands(commandDispatcher, connectionManager);
 
             try
             {
-                int Port = 8085;
                 Grpc.Core.Server server = new Grpc.Core.Server
                 {
                     Services =
                     {
                         PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
                     },
-                    Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
+                    Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
                 };
-                Console.WriteLine("Client listening on port " + Port);
+                Console.WriteLine("Client listening on port " + port);
                 
                 server.Start();
 
@@ -98,12 +103,6 @@ namespace Client
                 var timer = new Stopwatch();
                 timer.Start();
                 Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
-
-                //for (int i = 0; i < 15; i++)
-                //{
-                //    Console.WriteLine("---");
-                //    await Task.Delay(500);
-                //}
 
                 await dispatcher;
                 timer.Stop();
@@ -124,36 +123,36 @@ namespace Client
             }
         }
 
-        private static ConnectionManager CreateClientConnectionManager()
+        private static ConnectionManager CreateClientConnectionManager(string networkConfiguration)
         {
-            int serverNumber = 5;
-            int partitionSize = 3;
+            InitializationParser initializationParser = new InitializationParser(networkConfiguration);
+            List<Tuple<string, string>> serversConfiguration = initializationParser.getServersConfiguration();
+            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.getPartitionsConfiguration();
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
-            for (int i = 1; i <= serverNumber; i++)
+            for (int i = 1; i < serversConfiguration.Count; i++)
             {
-                string serverId = "s-" + i;
-                int port = 8080 + i;
-                string address = "http://localhost:" + port;
+                Tuple<string, string> serverConfig = serversConfiguration[i];
+                string serverId = serverConfig.Item1;
+                string address = serverConfig.Item2;
                 GrpcChannel channel = GrpcChannel.ForAddress(address);
                 GStoreService.GStoreServiceClient stub = new GStoreService.GStoreServiceClient(channel);
                 Domain.Server server = new Domain.Server(serverId, stub);
                 servers.Add(serverId, server);
             }
 
-            for (int i = 1; i <= serverNumber; i++)
+            foreach (Tuple<string, List<string>> partitionConfig in partitionsConfiguration)
             {
-                string masterId = "s-" + i;
+                string partitionId = partitionConfig.Item1;
+                string masterId = partitionConfig.Item2.ElementAt(0);
                 ISet<string> partitionServerSet = new HashSet<string>();
 
-                for (int j = 1; j < partitionSize; j++)
+                foreach (string serverId in partitionConfig.Item2)
                 {
-                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
                     partitionServerSet.Add(serverId);
                 }
 
-                string partitionId = "part-" + i;
                 Partition partition = new Partition(partitionId, masterId, partitionServerSet);
                 partitions.Add(partitionId, partition);
             }

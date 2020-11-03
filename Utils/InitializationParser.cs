@@ -26,7 +26,7 @@ namespace Utils
             {
                 string[] serverAndUrl = serversArray[i+3].Split(",");
                 res.Add(new Tuple<string, string>(serverAndUrl[0], serverAndUrl[1]));
-                Console.WriteLine($"server: {serverAndUrl[0]} url{serverAndUrl[1]}");
+                Console.WriteLine($"server: {serverAndUrl[0]} url: {serverAndUrl[1]}");
             }
             return res;
         }

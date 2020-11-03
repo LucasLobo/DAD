@@ -21,8 +21,9 @@ namespace GStoreServer
             Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4] + " : ");
             
             myServerId = args[0];
-            string[] url = args[1].Split(":");
-            int port = Int32.Parse(args[1].Split(":")[2]);
+            string[] protocolAndHostnameAndPort = args[1].Split("://");
+            string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+            int port = Int32.Parse(hotnameAndPort[1]);
             int minDelay = Int32.Parse(args[2]);
             int maxDelay = Int32.Parse(args[3]);
             ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
@@ -41,7 +42,7 @@ namespace GStoreServer
                     MasterReplicaService.BindService(new MasterReplicaServiceImpl(gStore)).Intercept(requestInterceptor),
                     PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
                 },
-                Ports = { new ServerPort(url[0]+url[1], port, ServerCredentials.Insecure) }
+                Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
             };
 
 
@@ -102,14 +103,18 @@ namespace GStoreServer
             ISet<string> masterPartitions = new HashSet<string>();
             ISet<string> replicaPartitions = new HashSet<string>();
 
-            foreach (Tuple<string, string> serverConfig in serversConfiguration)
+            for (int i = 1; i < serversConfiguration.Count; i++)
             {
+                Tuple<string, string> serverConfig = serversConfiguration[i];
                 string serverId = serverConfig.Item1;
-                string address = serverConfig.Item2;
-                GrpcChannel channel = GrpcChannel.ForAddress(address);
-                MasterReplicaService.MasterReplicaServiceClient stub = new MasterReplicaService.MasterReplicaServiceClient(channel);
-                Domain.Server server = new Domain.Server(serverId, stub);
-                servers.Add(serverId, server);
+                if (myServerId != serverId)
+                {
+                    string address = serverConfig.Item2;
+                    GrpcChannel channel = GrpcChannel.ForAddress(address);
+                    MasterReplicaService.MasterReplicaServiceClient stub = new MasterReplicaService.MasterReplicaServiceClient(channel);
+                    Domain.Server server = new Domain.Server(serverId, stub);
+                    servers.Add(serverId, server);
+                }
             }
 
             foreach (Tuple<string, List<string>> partitionConfig in partitionsConfiguration)

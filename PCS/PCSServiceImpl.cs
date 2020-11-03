@@ -10,8 +10,8 @@ namespace PCS
 {
     class PCSServiceImpl : PuppetMasterPCSService.PuppetMasterPCSServiceBase
     {
-        private const string CLIENT_LOCATION = "../../../../Client/bin/Debug/netcoreapp3.1/Client.exe";
-        private const string SERVER_LOCATION = "../../../../Server/bin/Debug/netcoreapp3.1/Server.exe";
+        private const string CLIENT_LOCATION = "..\\..\\..\\..\\Client\\bin\\Debug\\netcoreapp3.1\\Client.exe";
+        private const string SERVER_LOCATION = "..\\..\\..\\..\\Server\\bin\\Debug\\netcoreapp3.1\\Server.exe";
 
         public PCSServiceImpl() { }
 
@@ -30,7 +30,6 @@ namespace PCS
                 {
                     FileName = filepath,
                     UseShellExecute = true,
-                    //Arguments = $"{request.ScriptFile}",
                     Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile} \"{request.NetworkConfiguration}\""
                 };
                 Process exeClientProcess = Process.Start(clientInfo);
@@ -56,7 +55,6 @@ namespace PCS
             {
                 Console.WriteLine($"Create Server request-> Server_ID: {request.ServerId} URL: {request.Url} Min-Delay: {request.MinDelay} Max-Delay: {request.MaxDelay}");
                 var filepath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), SERVER_LOCATION);
-                Console.WriteLine(filepath);
                 ProcessStartInfo serverInfo = new ProcessStartInfo
                 {
                     FileName = filepath,

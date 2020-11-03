@@ -17,34 +17,34 @@ namespace Utils
             InputLineSplited = toParse.Split(" -p ");
         }
 
-        public List<Tuple<string, string>> getServersConfiguration()
+        public List<Tuple<string, string>> GetServersConfiguration()
         {
             List<Tuple<string, string>> res = new List<Tuple<string, string>>();
             string[] serversArray = InputLineSplited[0].Split(" ");
         
-            for (int i = 0; i < Int32.Parse(serversArray[2]); i++)
+            for (int i = 0; i < int.Parse(serversArray[2]); i++)
             {
                 string[] serverAndUrl = serversArray[i+3].Split(",");
                 res.Add(new Tuple<string, string>(serverAndUrl[0], serverAndUrl[1]));
-                Console.WriteLine($"server: {serverAndUrl[0]} url: {serverAndUrl[1]}");
+                //Console.WriteLine($"server: {serverAndUrl[0]} url: {serverAndUrl[1]}");
             }
             return res;
         }
 
-        public List<Tuple<string, List<string>>> getPartitionsConfiguration()
+        public List<Tuple<string, List<string>>> GetPartitionsConfiguration()
         {
             List<Tuple<string, List<string>>> res = new List<Tuple<string, List<string>>>();
             for (int i = 1; i < InputLineSplited.Length; i++)
             {
                 string[] partitionInput = InputLineSplited[i].Split(" ");
                 List<string> serverIDs = new List<string>();
-                Console.WriteLine("PARTITION: " + partitionInput[1]);
-                for (int j = 0; j < Int32.Parse(partitionInput[0]); j++)
+                //Console.WriteLine("PARTITION: " + partitionInput[1]);
+                for (int j = 0; j < int.Parse(partitionInput[0]); j++)
                 {
                     serverIDs.Add(partitionInput[j+2]);
-                    Console.WriteLine("Server: " + partitionInput[j+2]);
+                    //Console.WriteLine("Server: " + partitionInput[j+2]);
                 }
-                res.Add(new Tuple<string, List<string>>(partitionInput[0], serverIDs));
+                res.Add(new Tuple<string, List<string>>(partitionInput[1], serverIDs));
             }
             return res;
         }

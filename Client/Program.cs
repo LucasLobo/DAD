@@ -43,49 +43,25 @@ namespace Client
         }
 
         static async Task Main(string[] args)
-        {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            if (args.Length == 0)
-            {
-                Console.WriteLine("ERROR: Expected a script name but received none.");
-                PressToExit();
-                return;
-            }
-
-            else if (args.Length > 1)
-            {
-                Console.WriteLine("WARNING: Expected 1 argument but received " + (args.Length - 1) + ".");
-                Console.WriteLine();
-            }
-
-            string username = args[0];
-            string url = args[1];
-            string[] protocolAndHostnameAndPort = url.Split("://");
-            string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
-            int port = Int32.Parse(hotnameAndPort[1]);
-            string filename = args[2];
-            string networkConfiguration = args[3];
-
-            string[] lines;
+        {            
             try
             {
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+                string username = args[0];
+                string url = args[1];
+                string[] protocolAndHostnameAndPort = url.Split("://");
+                string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+                int port = Int32.Parse(hotnameAndPort[1]);
+                string filename = args[2];
+                string networkConfiguration = args[3];
+                string[] lines;
                 lines = System.IO.File.ReadAllLines(filename);
-            }
-            catch (System.IO.FileNotFoundException e)
-            {
-                Console.WriteLine("ERROR: File " + filename + " not found in current directory.");
-                Console.WriteLine(e);
-                PressToExit();
-                return;
-            }
 
-            CommandDispatcher commandDispatcher = new CommandDispatcher();
-            ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
-            RegisterCommands(commandDispatcher, connectionManager);
+                CommandDispatcher commandDispatcher = new CommandDispatcher();
+                ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
+                RegisterCommands(commandDispatcher, connectionManager);
 
-            try
-            {
                 Grpc.Core.Server server = new Grpc.Core.Server
                 {
                     Services =
@@ -95,7 +71,7 @@ namespace Client
                     Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
                 };
                 Console.WriteLine("Client listening on port " + port);
-                
+
                 server.Start();
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
@@ -114,10 +90,18 @@ namespace Client
 
                 Console.WriteLine("\nShutting down...");
                 server.ShutdownAsync().Wait();
+
+            }
+            catch (System.IO.FileNotFoundException e)
+            {
+                Console.WriteLine("ERROR: File " + args[2] + " not found in current directory.");
+                Console.WriteLine(e);
+                PressToExit();
+                return;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
                 PressToExit();
                 return;
             }
@@ -126,8 +110,8 @@ namespace Client
         private static ConnectionManager CreateClientConnectionManager(string networkConfiguration)
         {
             InitializationParser initializationParser = new InitializationParser(networkConfiguration);
-            List<Tuple<string, string>> serversConfiguration = initializationParser.getServersConfiguration();
-            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.getPartitionsConfiguration();
+            List<Tuple<string, string>> serversConfiguration = initializationParser.GetServersConfiguration();
+            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.GetPartitionsConfiguration();
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();

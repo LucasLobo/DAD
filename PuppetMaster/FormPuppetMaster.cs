@@ -71,16 +71,17 @@ namespace PuppetMaster
 
                 foreach (string line in lines)
                 {
-                    bool isConcurrent = CommandDispatcher.IsConcurrent(line);
+                    string lineLower = line.ToLower();
+                    bool isConcurrent = CommandDispatcher.IsConcurrent(lineLower);
 
                     if (isConcurrent)
                     {
-                        Task task = ExecuteCommand(line);
+                        Task task = ExecuteCommand(lineLower);
                         tasks.Add(task);
                     }
                     else
                     {
-                        await ExecuteCommand(line);
+                        await ExecuteCommand(lineLower);
                     }
                 }
                 await Task.WhenAll(tasks);
@@ -92,7 +93,7 @@ namespace PuppetMaster
             }
             catch (CommandNotRegisteredException exception)
             {
-                if (isConfiguring) FatalException(exception, "Configuration error.");
+                if (isConfiguring) FatalException(exception, "Configuration error");
                 else txtBoxOutput.AppendText(Environment.NewLine + exception.Message);
             }
             catch (ApplySystemConfigurationException exception)
@@ -146,7 +147,7 @@ namespace PuppetMaster
         {
             //hard style
             string commandName = CommandDispatcher.ExtractCommandName(inputLine);
-            if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("partition") && !commandName.Equals("server")
+            if (isConfiguring && CommandDispatcher.IsValidCommand(commandName) && !commandName.Equals("replicationfactor") && !commandName.Equals("partition") && !commandName.Equals("server")
                 && !commandName.Equals("help") && !commandName.Equals("quit") && !commandName.Equals("clear"))
             {
                 isConfiguring = false;

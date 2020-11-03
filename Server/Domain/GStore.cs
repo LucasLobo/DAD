@@ -120,9 +120,35 @@ namespace GStoreServer
             return values;
         }
 
-        public void GetIdSet()
+        public async Task<ICollection<GStoreObjectIdentifier>> GetIdSet()
         {
+            ICollection<ReaderWriterLockEnhancedSlim> locks = ObjectLocks.Values;
 
+            IDictionary<ReaderWriterLockEnhancedSlim, Task<int>> lockTasks = new Dictionary<ReaderWriterLockEnhancedSlim, Task<int>>();
+            foreach (ReaderWriterLockEnhancedSlim objectLock in locks)
+            {
+                lockTasks.Add(objectLock, Task.Run(objectLock.EnterReadLock));
+            }
+
+            IDictionary<ReaderWriterLockEnhancedSlim, int> lockWithReadIdSet = new Dictionary<ReaderWriterLockEnhancedSlim, int>();
+
+            foreach (KeyValuePair<ReaderWriterLockEnhancedSlim, Task<int>> lockTask in lockTasks)
+            {
+                ReaderWriterLockEnhancedSlim objectLock = lockTask.Key;
+                Task<int> task = lockTask.Value;
+                lockWithReadIdSet.Add(objectLock, await task);
+            }
+
+            ICollection<GStoreObjectIdentifier> keys = DataStore.Keys;
+
+            foreach (KeyValuePair<ReaderWriterLockEnhancedSlim, int> lockWithReadId in lockWithReadIdSet)
+            {
+                ReaderWriterLockEnhancedSlim objectLock = lockWithReadId.Key;
+                int lockId = lockWithReadId.Value;
+                objectLock.ExitReadLock(lockId);
+            }
+
+            return keys;
         }
 
         public int Lock(GStoreObjectIdentifier gStoreObjectIdentifier)

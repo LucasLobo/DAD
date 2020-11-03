@@ -50,21 +50,21 @@ namespace GStoreServer.Services
 
         public override Task<GStoreListGlobalReply> ListGlobal(Empty request, ServerCallContext context)
         {
-            return Task.FromResult(ExecuteListGlobal());
+            return ExecuteListGlobal();
         }
 
-        private GStoreListGlobalReply ExecuteListGlobal()
+        private async Task<GStoreListGlobalReply> ExecuteListGlobal()
         {
             Console.WriteLine("ListGlobal request");
-            DataObjectIdentifier objId1 = DataObjectIdentifierBuilder.FromString("partitionId1", "objectId1");
-            DataObjectIdentifier objId21 = DataObjectIdentifierBuilder.FromString("partitionId2", "objectId2");
-            DataObjectIdentifier objId22 = DataObjectIdentifierBuilder.FromString("partitionId2", "objectId2");
-            DataObjectIdentifier objId3 = DataObjectIdentifierBuilder.FromString("partitionId3", "objectId3");
+
+            ICollection<GStoreObjectIdentifier> idSet = await gStore.GetIdSet();
+
             GStoreListGlobalReply reply = new GStoreListGlobalReply();
-            reply.ObjectIdentifiers.Add(objId1);
-            reply.ObjectIdentifiers.Add(objId21);
-            reply.ObjectIdentifiers.Add(objId22);
-            reply.ObjectIdentifiers.Add(objId3);
+
+            foreach(GStoreObjectIdentifier objectIdentifier in idSet)
+            {
+                reply.ObjectIdentifiers.Add(DataObjectIdentifierBuilder.FromObjectIdentifier(objectIdentifier));
+            }
             return reply;
         }
 
@@ -96,6 +96,11 @@ namespace GStoreServer.Services
                     PartitionId = partitionId,
                     ObjectId = objectId
                 };
+            }
+
+            internal static DataObjectIdentifier FromObjectIdentifier(GStoreObjectIdentifier objectIdentifier)
+            {
+                return FromString(objectIdentifier.PartitionId, objectIdentifier.ObjectId);
             }
         }
 

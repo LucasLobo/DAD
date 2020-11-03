@@ -31,7 +31,7 @@ namespace PCS
                     FileName = filepath,
                     UseShellExecute = true,
                     //Arguments = $"{request.ScriptFile}",
-                    Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile} {request.NetworkConfiguration}"
+                    Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile} \"{request.NetworkConfiguration}\""
                 };
                 Process exeClientProcess = Process.Start(clientInfo);
 
@@ -56,12 +56,12 @@ namespace PCS
             {
                 Console.WriteLine($"Create Server request-> Server_ID: {request.ServerId} URL: {request.Url} Min-Delay: {request.MinDelay} Max-Delay: {request.MaxDelay}");
                 var filepath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), SERVER_LOCATION);
-            
+                Console.WriteLine(filepath);
                 ProcessStartInfo serverInfo = new ProcessStartInfo
                 {
                     FileName = filepath,
                     UseShellExecute = true,
-                    Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay} {request.NetworkConfiguration}"
+                    Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay} \"{request.NetworkConfiguration}\""
                 };
                 Process exeServerProcess = Process.Start(serverInfo);
                 Console.WriteLine($"Create Server DONE");

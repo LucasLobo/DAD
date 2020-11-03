@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -12,16 +13,21 @@ namespace GStoreServer
 {
     class Program
     {
-        const int Port = 8081;
+        private static string myServerId;
+
         static void Main(string[] args)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4] + " : " + args[5] + " : ");
-            int minDelay = 0;
-            int maxDelay = 0;
+            Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4] + " : ");
+            
+            myServerId = args[0];
+            string[] url = args[1].Split(":");
+            int port = Int32.Parse(args[1].Split(":")[2]);
+            int minDelay = Int32.Parse(args[2]);
+            int maxDelay = Int32.Parse(args[3]);
             ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
 
-            ConnectionManager connectionManager = CreateServerConnectionManager();
+            ConnectionManager connectionManager = CreateServerConnectionManager(args[4]);
             Console.WriteLine(connectionManager);
 
             GStore gStore = new GStore(connectionManager);
@@ -35,9 +41,9 @@ namespace GStoreServer
                     MasterReplicaService.BindService(new MasterReplicaServiceImpl(gStore)).Intercept(requestInterceptor),
                     PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
                 },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
+                Ports = { new ServerPort(url[0]+url[1], port, ServerCredentials.Insecure) }
             };
-            
+
 
             //GStoreObject obj1 = new GStoreObject( "v1");
             //GStoreObject obj2 = new GStoreObject(new GStoreObjectIdentifier("1", "2"), "v2");
@@ -54,9 +60,11 @@ namespace GStoreServer
 
             //Console.WriteLine(gstoreserver.Read(new GStoreObjectIdentifier("1", "4")));
 
-            
+            server.Start();
+            Console.WriteLine("GStore server listening on port " + port);
+            Console.WriteLine("Press any key to stop the server...");
 
-            try
+            /*try
             {
                 server.Start();
                 Console.WriteLine("GStore server listening on port " + Port);
@@ -77,56 +85,52 @@ namespace GStoreServer
                 server.Start();
                 Console.WriteLine("GStore server listening on port " + (Port+1));
                 Console.WriteLine("Press any key to stop the server...");
-            }
+            }*/
             Console.ReadKey();
             Console.WriteLine("\nShutting down...");
             server.ShutdownAsync().Wait();
         }
 
-        private static ConnectionManager CreateServerConnectionManager()
+        private static ConnectionManager CreateServerConnectionManager(string networkConfiguration)
         {
-            int serverNumber = 5;
-            int partitionSize = 3;
+            InitializationParser initializationParser = new InitializationParser(networkConfiguration);
+            List<Tuple<string, string>> serversConfiguration = initializationParser.getServersConfiguration();
+            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.getPartitionsConfiguration();
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
             ISet<string> masterPartitions = new HashSet<string>();
             ISet<string> replicaPartitions = new HashSet<string>();
 
-            for (int i = 1; i <= serverNumber; i++)
+            foreach (Tuple<string, string> serverConfig in serversConfiguration)
             {
-                string serverId = "s-" + i;
-                int port = 8080 + i;
-                string address = "http://localhost:" + port;
+                string serverId = serverConfig.Item1;
+                string address = serverConfig.Item2;
                 GrpcChannel channel = GrpcChannel.ForAddress(address);
                 MasterReplicaService.MasterReplicaServiceClient stub = new MasterReplicaService.MasterReplicaServiceClient(channel);
                 Domain.Server server = new Domain.Server(serverId, stub);
                 servers.Add(serverId, server);
             }
 
-            for (int i = 1; i <= serverNumber; i++)
+            foreach (Tuple<string, List<string>> partitionConfig in partitionsConfiguration)
             {
-                string masterId = "s-" + i;
+                string partitionId = partitionConfig.Item1;
+                string masterId = partitionConfig.Item2.ElementAt(0);
                 ISet<string> partitionServerSet = new HashSet<string>();
 
-                for (int j = 1; j < partitionSize; j++)
+                foreach (string serverId in partitionConfig.Item2)
                 {
-                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
                     partitionServerSet.Add(serverId);
                 }
 
-                string partitionId = "part-" + i;
                 Partition partition = new Partition(partitionId, masterId, partitionServerSet);
 
-                if (i == 1) masterPartitions.Add(partitionId);
+                if (masterId == myServerId) masterPartitions.Add(partitionId);
                 else replicaPartitions.Add(partitionId);
 
                 partitions.Add(partitionId, partition);
             }
-            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, masterPartitions, replicaPartitions, "s-1");
-            connectionManager.DeclareDead("s-3");
-            connectionManager.DeclareDead("s-4");
-            connectionManager.DeclareDead("s-5");
+            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, masterPartitions, replicaPartitions, myServerId);
             return connectionManager;
         }
     }

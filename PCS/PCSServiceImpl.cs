@@ -30,8 +30,8 @@ namespace PCS
                 {
                     FileName = filepath,
                     UseShellExecute = true,
-                    Arguments = $"{request.ScriptFile}"
-                    //Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile}"
+                    //Arguments = $"{request.ScriptFile}",
+                    Arguments = $"{request.Username} {request.ClientUrl} {request.ScriptFile} {request.NetworkConfiguration}"
                 };
                 Process exeClientProcess = Process.Start(clientInfo);
 
@@ -61,7 +61,7 @@ namespace PCS
                 {
                     FileName = filepath,
                     UseShellExecute = true,
-                    //Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay}"
+                    Arguments = $"{request.ServerId} {request.Url} {request.MinDelay} {request.MaxDelay} {request.NetworkConfiguration}"
                 };
                 Process exeServerProcess = Process.Start(serverInfo);
                 Console.WriteLine($"Create Server DONE");

@@ -16,7 +16,7 @@ namespace GStoreServer
         static void Main(string[] args)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
+            Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4] + " : " + args[5] + " : ");
             int minDelay = 0;
             int maxDelay = 0;
             ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);

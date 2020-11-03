@@ -17,11 +17,11 @@ namespace GStoreServer.Domain
         {
             if (string.IsNullOrWhiteSpace(selfServerId))
             {
-                throw new System.ArgumentException($"'{nameof(selfServerId)}' cannot be null or whitespace");
+                throw new ArgumentException($"'{nameof(selfServerId)}' cannot be null or whitespace");
             }
 
-            this.masterPartitions = masterPartitions ?? throw new System.ArgumentNullException(nameof(masterPartitions));
-            this.replicaPartitions = replicaPartitions ?? throw new System.ArgumentNullException(nameof(replicaPartitions));
+            this.masterPartitions = masterPartitions ?? throw new ArgumentNullException(nameof(masterPartitions));
+            this.replicaPartitions = replicaPartitions ?? throw new ArgumentNullException(nameof(replicaPartitions));
             this.selfServerId = selfServerId;
         }
 
@@ -68,6 +68,25 @@ namespace GStoreServer.Domain
             base.DeclareDead(serverId);
 
             // todo need to fix masterPartitions and replicaPartitions
+        }
+
+        public override string ToString()
+        {
+            string toString = base.ToString();
+
+            toString += "\nPartitions where (self) master:";
+            foreach(string partition in masterPartitions)
+            {
+                toString += " " + partition;
+            }
+
+            toString += "\nPartitions where (self) replica:";
+            foreach (string partition in replicaPartitions)
+            {
+                toString += " " + partition;
+            }
+
+            return toString;
         }
     }
 }

@@ -46,7 +46,7 @@ namespace Utils
 
         public override string ToString()
         {
-            return $"{Id}, {Alive}";
+            return $"{Id}, {(Alive ? "Alive" : "Dead")}";
         }
     }
 }

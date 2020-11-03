@@ -19,7 +19,7 @@ namespace Utils
 
         public override string ToString()
         {
-            string lines = "Servers:\n";
+            string lines = "=== ConnectionManager ===\nServers:\n";
 
             foreach (KeyValuePair<string, TServer> serverEntry in Servers)
             {
@@ -31,7 +31,6 @@ namespace Utils
             {
                 lines += $"  {partitionEntry.Value}\n";
             }
-
             return lines;
         }
 

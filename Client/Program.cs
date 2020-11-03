@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client.Commands;
 using Client.Domain;
-using Google.Protobuf.WellKnownTypes;
 using Utils;
 using Grpc.Core;
 using System.Diagnostics;
 using Grpc.Net.Client;
+using System.Linq;
 
 namespace Client
 {
@@ -24,9 +24,9 @@ namespace Client
             commandDispatcher.Register("wait", new WaitCommand());
         }
 
-        public static ConnectionManager CreateConnectionManager()
+        public static ConnectionManager CreateConnectionManager(string networkConfiguration)
         {
-            ConnectionManager connectionManager = CreateClientConnectionManager();
+            ConnectionManager connectionManager = CreateClientConnectionManager(networkConfiguration);
             Console.WriteLine(connectionManager);
             Console.WriteLine();
             return connectionManager;
@@ -43,117 +43,94 @@ namespace Client
         }
 
         static async Task Main(string[] args)
-        {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            if (args.Length == 0)
-            {
-                Console.WriteLine("ERROR: Expected a script name but received none.");
-                PressToExit();
-                return;
-            }
-
-            else if (args.Length > 1)
-            {
-                Console.WriteLine("WARNING: Expected 1 argument but received " + (args.Length - 1) + ".");
-                Console.WriteLine();
-            }
-
-            String filename = args[0];
-
-            string[] lines;
+        {            
             try
             {
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+                string username = args[0];
+                string url = args[1];
+                string[] protocolAndHostnameAndPort = url.Split("://");
+                string[] hostnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+                int port = int.Parse(hostnameAndPort[1]);
+                string filename = args[2];
+                string networkConfiguration = args[3];
+                string[] lines;
                 lines = System.IO.File.ReadAllLines(filename);
-            }
-            catch (System.IO.FileNotFoundException e)
-            {
-                Console.WriteLine("ERROR: File " + filename + " not found in current directory.");
-                Console.WriteLine(e);
-                PressToExit();
-                return;
-            }
 
-            CommandDispatcher commandDispatcher = new CommandDispatcher();
-            ConnectionManager connectionManager = CreateConnectionManager();
-            RegisterCommands(commandDispatcher, connectionManager);
+                CommandDispatcher commandDispatcher = new CommandDispatcher();
+                ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
+                Console.WriteLine(connectionManager);
+                RegisterCommands(commandDispatcher, connectionManager);
 
-            try
-            {
-                int Port = 8085;
                 Grpc.Core.Server server = new Grpc.Core.Server
                 {
                     Services =
                     {
                         PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
                     },
-                    Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
+                    Ports = { new ServerPort(hostnameAndPort[0], port, ServerCredentials.Insecure) }
                 };
-                Console.WriteLine("Client listening on port " + Port);
-                
+                Console.WriteLine("Client listening on port " + port);
+
                 server.Start();
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
-                var timer = new Stopwatch();
-                timer.Start();
-                Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
-
-                //for (int i = 0; i < 15; i++)
-                //{
-                //    Console.WriteLine("---");
-                //    await Task.Delay(500);
-                //}
-
-                await dispatcher;
-                timer.Stop();
-                Console.WriteLine(timer.ElapsedMilliseconds);
+                await commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
                 Console.WriteLine("Press ENTER to stop the client...");
                 PressToExit();
 
-
                 Console.WriteLine("\nShutting down...");
                 server.ShutdownAsync().Wait();
+
+            }
+            catch (System.IO.FileNotFoundException e)
+            {
+                Console.WriteLine("ERROR: File " + args[2] + " not found in current directory.");
+                Console.WriteLine(e);
+                PressToExit();
+                return;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
                 PressToExit();
                 return;
             }
         }
 
-        private static ConnectionManager CreateClientConnectionManager()
+        private static ConnectionManager CreateClientConnectionManager(string networkConfiguration)
         {
-            int serverNumber = 5;
-            int partitionSize = 3;
+            InitializationParser initializationParser = new InitializationParser(networkConfiguration);
+            List<Tuple<string, string>> serversConfiguration = initializationParser.GetServersConfiguration();
+            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.GetPartitionsConfiguration();
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
-            for (int i = 1; i <= serverNumber; i++)
+            for (int i = 0; i < serversConfiguration.Count; i++)
             {
-                string serverId = "s-" + i;
-                int port = 8080 + i;
-                string address = "http://localhost:" + port;
+                Tuple<string, string> serverConfig = serversConfiguration[i];
+                string serverId = serverConfig.Item1;
+                string address = serverConfig.Item2;
                 GrpcChannel channel = GrpcChannel.ForAddress(address);
                 GStoreService.GStoreServiceClient stub = new GStoreService.GStoreServiceClient(channel);
                 Domain.Server server = new Domain.Server(serverId, stub);
                 servers.Add(serverId, server);
             }
 
-            for (int i = 1; i <= serverNumber; i++)
+            foreach (Tuple<string, List<string>> partitionConfig in partitionsConfiguration)
             {
-                string masterId = "s-" + i;
+                string partitionId = partitionConfig.Item1;
+                string masterId = partitionConfig.Item2.ElementAt(0);
                 ISet<string> partitionServerSet = new HashSet<string>();
 
-                for (int j = 1; j < partitionSize; j++)
+                foreach (string serverId in partitionConfig.Item2)
                 {
-                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
                     partitionServerSet.Add(serverId);
                 }
 
-                string partitionId = "part-" + i;
                 Partition partition = new Partition(partitionId, masterId, partitionServerSet);
                 partitions.Add(partitionId, partition);
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -12,59 +13,39 @@ namespace GStoreServer
 {
     class Program
     {
-        const int Port = 8081;
+        private static string myServerId;
+
+        public static void PressToExit()
+        {
+            ConsoleKeyInfo keyInfo;
+            do
+            {
+                keyInfo = Console.ReadKey();
+            }
+            while (keyInfo.Key != ConsoleKey.Enter);
+        }
         static void Main(string[] args)
         {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            int minDelay = 0;
-            int maxDelay = 0;
-            ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
-
-            ConnectionManager connectionManager = CreateServerConnectionManager();
-            Console.WriteLine(connectionManager);
-
-            GStore gStore = new GStore(connectionManager);
-            RequestInterceptor requestInterceptor = new RequestInterceptor(freezeLock, minDelay, maxDelay);
-
-            Grpc.Core.Server server = new Grpc.Core.Server
-            {
-                Services =
-                {
-                    GStoreService.BindService(new ServerServiceImpl(gStore)).Intercept(requestInterceptor),
-                    MasterReplicaService.BindService(new MasterReplicaServiceImpl(gStore)).Intercept(requestInterceptor),
-                    PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
-                },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
-            };
-            
-
-            //GStoreObject obj1 = new GStoreObject( "v1");
-            //GStoreObject obj2 = new GStoreObject(new GStoreObjectIdentifier("1", "2"), "v2");
-            //GStoreObject obj3 = new GStoreObject(new GStoreObjectIdentifier("1", "3"), "v3");
-            //Console.WriteLine(gstoreserver.AddObject(obj1));
-            //Console.WriteLine(gstoreserver.AddObject(obj2));
-            //Console.WriteLine(gstoreserver.AddObject(obj3));
-            //Console.WriteLine(gstoreserver.AddObject(obj3));
-
-            //gstoreserver.ShowDataStore();
-            //gstoreserver.UpdateObject(new GStoreObject(new GStoreObjectIdentifier("1", "2"), "novo"));
-            //Console.WriteLine("\n");
-            //gstoreserver.ShowDataStore();
-
-            //Console.WriteLine(gstoreserver.Read(new GStoreObjectIdentifier("1", "4")));
-
-            
-
             try
             {
-                server.Start();
-                Console.WriteLine("GStore server listening on port " + Port);
-                Console.WriteLine("Press any key to stop the server...");
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+                Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4]);
 
-            } catch (Exception)
-            {
-                server = new Grpc.Core.Server
+                myServerId = args[0];
+                string[] protocolAndHostnameAndPort = args[1].Split("://");
+                string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+                int port = int.Parse(hotnameAndPort[1]);
+                int minDelay = int.Parse(args[2]);
+                int maxDelay = int.Parse(args[3]);
+                
+                ConnectionManager connectionManager = CreateServerConnectionManager(args[4]);
+                Console.WriteLine(connectionManager);
+
+                GStore gStore = new GStore(connectionManager);
+                ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
+                RequestInterceptor requestInterceptor = new RequestInterceptor(freezeLock, minDelay, maxDelay);
+
+                Grpc.Core.Server server = new Grpc.Core.Server
                 {
                     Services =
                 {
@@ -72,61 +53,68 @@ namespace GStoreServer
                     MasterReplicaService.BindService(new MasterReplicaServiceImpl(gStore)).Intercept(requestInterceptor),
                     PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
                 },
-                    Ports = { new ServerPort("localhost", Port+1, ServerCredentials.Insecure) }
+                    Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
                 };
+
                 server.Start();
-                Console.WriteLine("GStore server listening on port " + (Port+1));
+                Console.WriteLine("GStore server listening on port " + port);
                 Console.WriteLine("Press any key to stop the server...");
+
+                PressToExit();
+                Console.WriteLine("\nShutting down...");
+                server.ShutdownAsync().Wait();
             }
-            Console.ReadKey();
-            Console.WriteLine("\nShutting down...");
-            server.ShutdownAsync().Wait();
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                PressToExit();
+            }
         }
 
-        private static ConnectionManager CreateServerConnectionManager()
+        private static ConnectionManager CreateServerConnectionManager(string networkConfiguration)
         {
-            int serverNumber = 5;
-            int partitionSize = 3;
+            InitializationParser initializationParser = new InitializationParser(networkConfiguration);
+            List<Tuple<string, string>> serversConfiguration = initializationParser.GetServersConfiguration();
+            List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.GetPartitionsConfiguration();
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
             ISet<string> masterPartitions = new HashSet<string>();
             ISet<string> replicaPartitions = new HashSet<string>();
 
-            for (int i = 1; i <= serverNumber; i++)
+            for (int i = 0; i < serversConfiguration.Count; i++)
             {
-                string serverId = "s-" + i;
-                int port = 8080 + i;
-                string address = "http://localhost:" + port;
-                GrpcChannel channel = GrpcChannel.ForAddress(address);
-                MasterReplicaService.MasterReplicaServiceClient stub = new MasterReplicaService.MasterReplicaServiceClient(channel);
-                Domain.Server server = new Domain.Server(serverId, stub);
-                servers.Add(serverId, server);
+                Tuple<string, string> serverConfig = serversConfiguration[i];
+                string serverId = serverConfig.Item1;
+                if (myServerId != serverId)
+                {
+                    string address = serverConfig.Item2;
+                    GrpcChannel channel = GrpcChannel.ForAddress(address);
+                    MasterReplicaService.MasterReplicaServiceClient stub = new MasterReplicaService.MasterReplicaServiceClient(channel);
+                    Domain.Server server = new Domain.Server(serverId, stub);
+                    servers.Add(serverId, server);
+                }
             }
 
-            for (int i = 1; i <= serverNumber; i++)
+            foreach (Tuple<string, List<string>> partitionConfig in partitionsConfiguration)
             {
-                string masterId = "s-" + i;
-                ISet<string> partitionServerSet = new HashSet<string>();
+                string partitionId = partitionConfig.Item1;
+                string masterId = partitionConfig.Item2.ElementAt(0);
+                ISet<string> partitionReplicaSet = new HashSet<string>();
 
-                for (int j = 1; j < partitionSize; j++)
+                foreach (string serverId in partitionConfig.Item2)
                 {
-                    string serverId = "s-" + ((i + j - 1) % serverNumber + 1);
-                    partitionServerSet.Add(serverId);
+                    if (serverId != masterId) partitionReplicaSet.Add(serverId);
                 }
 
-                string partitionId = "part-" + i;
-                Partition partition = new Partition(partitionId, masterId, partitionServerSet);
+                Partition partition = new Partition(partitionId, masterId, partitionReplicaSet);
 
-                if (i == 1) masterPartitions.Add(partitionId);
-                else replicaPartitions.Add(partitionId);
+                if (masterId == myServerId) masterPartitions.Add(partitionId);
+                else if (partition.Contains(myServerId)) replicaPartitions.Add(partitionId);
 
                 partitions.Add(partitionId, partition);
             }
-            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, masterPartitions, replicaPartitions, "s-1");
-            connectionManager.DeclareDead("s-3");
-            connectionManager.DeclareDead("s-4");
-            connectionManager.DeclareDead("s-5");
+            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, masterPartitions, replicaPartitions, myServerId);
             return connectionManager;
         }
     }

@@ -1,6 +1,7 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Utils;
 
@@ -69,23 +70,20 @@ namespace GStoreServer.Services
 
         public override Task<GStoreListServerReply> ListServer(Empty request, ServerCallContext context)
         {
-            return Task.FromResult(ExecuteListServer());
+            return ExecuteListServer();
         }
 
-        private GStoreListServerReply ExecuteListServer()
+        private async Task<GStoreListServerReply> ExecuteListServer()
         {
             Console.WriteLine($"ListServer request");
 
-            DataObjectReplica objectReplica1 = DataObjectReplicaBuilder.FromString("partitionId1", "serverId1", "value1", true);
-            DataObjectReplica objectReplica21 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value2", false);
-            DataObjectReplica objectReplica22 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value2", true);
-            DataObjectReplica objectReplica23 = DataObjectReplicaBuilder.FromString("partitionId2", "serverId2", "value3", true);
+            ICollection<GStoreObjectReplica> gStoreObjectReplicas = await gStore.ReadAll();
 
             GStoreListServerReply reply = new GStoreListServerReply();
-            reply.ObjectReplicas.Add(objectReplica1);
-            reply.ObjectReplicas.Add(objectReplica21);
-            reply.ObjectReplicas.Add(objectReplica22);
-            reply.ObjectReplicas.Add(objectReplica23);
+            foreach (GStoreObjectReplica gStoreObjectReplica in gStoreObjectReplicas)
+            {
+                reply.ObjectReplicas.Add(DataObjectReplicaBuilder.FromObjectReplica(gStoreObjectReplica));
+            }
             return reply;
         }
 
@@ -133,6 +131,11 @@ namespace GStoreServer.Services
                     Object = DataObjectBuilder.FromString(partitionId, objectId, value),
                     IsMasterReplica = isMasterReplica
                 };
+            }
+
+            internal static DataObjectReplica FromObjectReplica(GStoreObjectReplica gStoreObjectReplica)
+            {
+                return FromString(gStoreObjectReplica.Object.Identifier.PartitionId, gStoreObjectReplica.Object.Identifier.ObjectId, gStoreObjectReplica.Object.Value, gStoreObjectReplica.IsMaster);
             }
         }
     }

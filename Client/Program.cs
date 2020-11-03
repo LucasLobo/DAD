@@ -51,8 +51,8 @@ namespace Client
                 string username = args[0];
                 string url = args[1];
                 string[] protocolAndHostnameAndPort = url.Split("://");
-                string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
-                int port = Int32.Parse(hotnameAndPort[1]);
+                string[] hostnameAndPort = protocolAndHostnameAndPort[1].Split(":");
+                int port = int.Parse(hostnameAndPort[1]);
                 string filename = args[2];
                 string networkConfiguration = args[3];
                 string[] lines;
@@ -60,6 +60,7 @@ namespace Client
 
                 CommandDispatcher commandDispatcher = new CommandDispatcher();
                 ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
+                Console.WriteLine(connectionManager);
                 RegisterCommands(commandDispatcher, connectionManager);
 
                 Grpc.Core.Server server = new Grpc.Core.Server
@@ -68,7 +69,7 @@ namespace Client
                     {
                         PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
                     },
-                    Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
+                    Ports = { new ServerPort(hostnameAndPort[0], port, ServerCredentials.Insecure) }
                 };
                 Console.WriteLine("Client listening on port " + port);
 
@@ -76,17 +77,10 @@ namespace Client
 
                 List<string> preprocessed = CommandPreprocessor.Preprocess(lines);
 
-                var timer = new Stopwatch();
-                timer.Start();
-                Task dispatcher = commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
-
-                await dispatcher;
-                timer.Stop();
-                Console.WriteLine(timer.ElapsedMilliseconds);
+                await commandDispatcher.ExecuteAllAsync(preprocessed.ToArray());
 
                 Console.WriteLine("Press ENTER to stop the client...");
                 PressToExit();
-
 
                 Console.WriteLine("\nShutting down...");
                 server.ShutdownAsync().Wait();
@@ -115,7 +109,7 @@ namespace Client
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
-            for (int i = 1; i < serversConfiguration.Count; i++)
+            for (int i = 0; i < serversConfiguration.Count; i++)
             {
                 Tuple<string, string> serverConfig = serversConfiguration[i];
                 string serverId = serverConfig.Item1;

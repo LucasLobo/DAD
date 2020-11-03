@@ -77,24 +77,6 @@ namespace GStoreServer
             List<Tuple<string, string>> serversConfiguration = initializationParser.GetServersConfiguration();
             List<Tuple<string, List<string>>> partitionsConfiguration = initializationParser.GetPartitionsConfiguration();
 
-            //Console.WriteLine("Servers");
-            //foreach (Tuple<string, string> tuple in serversConfiguration)
-            //{
-            //    Console.WriteLine(tuple.Item1 + " " + tuple.Item2);
-            //}
-
-            //foreach(Tuple<string, List<string>> tuple in partitionsConfiguration)
-            //{
-            //    Console.WriteLine("Partition: " + tuple.Item1);
-
-            //    Console.Write("Servers: ");
-            //    foreach(string item in tuple.Item2)
-            //    {
-            //        Console.Write(item + " ");
-            //    }
-            //    Console.WriteLine();
-            //}
-
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
             ISet<string> masterPartitions = new HashSet<string>();

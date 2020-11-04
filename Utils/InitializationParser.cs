@@ -26,7 +26,6 @@ namespace Utils
             {
                 string[] serverAndUrl = serversArray[i+3].Split(",");
                 res.Add(new Tuple<string, string>(serverAndUrl[0], serverAndUrl[1]));
-                //Console.WriteLine($"server: {serverAndUrl[0]} url: {serverAndUrl[1]}");
             }
             return res;
         }
@@ -38,11 +37,9 @@ namespace Utils
             {
                 string[] partitionInput = InputLineSplited[i].Split(" ");
                 List<string> serverIDs = new List<string>();
-                //Console.WriteLine("PARTITION: " + partitionInput[1]);
                 for (int j = 0; j < int.Parse(partitionInput[0]); j++)
                 {
                     serverIDs.Add(partitionInput[j+2]);
-                    //Console.WriteLine("Server: " + partitionInput[j+2]);
                 }
                 res.Add(new Tuple<string, List<string>>(partitionInput[1], serverIDs));
             }

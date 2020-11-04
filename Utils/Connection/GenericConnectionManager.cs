@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using static Utils.ServerBindException;
 
@@ -9,12 +10,112 @@ namespace Utils
     {
         private IDictionary<string, TServer> Servers { get; }
 
-        private IDictionary<string, Partition> Partitions { get; }
+        protected IDictionary<string, Partition> Partitions { get; }
 
         protected GenericConnectionManager(IDictionary<string, TServer> servers, IDictionary<string, Partition> partitions)
         {
             Servers = servers;
             Partitions = partitions;
+        }
+
+        public bool PartitionContainsAlive(string partitionId, string serverId)
+        {
+            Partition partition = GetPartition(partitionId);
+            TServer server = GetServer(serverId);
+
+            return partition.Contains(serverId) && server.Alive;
+        }
+
+        //public ISet<TServer> GetPartitionAliveServers(string partitionId)
+        //{
+        //    ISet<TServer> serverSet = GetPartitionAliveReplicas(partitionId);
+        //    Partition partition = GetPartition(partitionId);
+        //    TServer master = GetServer(partition.MasterId);
+        //    if (master.Alive) serverSet.Add(master);
+        //    return serverSet;
+        //}
+
+        // Get replicas that are alive for a partition
+        public IImmutableSet<TServer> GetPartitionAliveReplicas(string partitionId)
+        {
+            Partition partition = GetPartition(partitionId);
+            ISet<TServer> replicaSet = new HashSet<TServer>();
+            ImmutableList<string> replicaIdList = partition.GetAllReplicas();
+
+            foreach (string serverId in replicaIdList)
+            {
+                TServer replica = GetServer(serverId);
+                if (replica.Alive) replicaSet.Add(replica);
+            }
+            return replicaSet.ToImmutableHashSet();
+        }
+
+        protected Partition GetPartition(string partitionId)
+        {
+            if (string.IsNullOrWhiteSpace(partitionId))
+            {
+                throw new ArgumentException($"'{partitionId}' cannot be null or whitespace", nameof(partitionId));
+            }
+
+            Partitions.TryGetValue(partitionId, out Partition partition);
+            if (partition == null)
+            {
+                throw new ArgumentException($"Partition '{partitionId}' not found.", nameof(partitionId));
+            }
+            return partition;
+        }
+
+        // Only returns server if alive
+        public TServer GetAliveServer(string serverId)
+        {
+            TServer server = GetServer(serverId);
+            if (!server.Alive)
+            {
+                throw new ServerBindException($"Server '{serverId}' is dead.", ServerBindExceptionStatus.SERVER_DEAD);
+            }
+            return server;
+        }
+
+        // Returns a server that might be dead
+        protected TServer GetServer(string serverId)
+        {
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                throw new ArgumentException($"'{serverId}' cannot be null or whitespace", nameof(serverId));
+            }
+
+            Servers.TryGetValue(serverId, out TServer server);
+            if (server == null)
+            {
+                throw new ArgumentException($"Server '{serverId}' not found.", nameof(serverId));
+            }
+
+            return server;
+        }
+
+        // Returns all servers that are alive
+        public IImmutableSet<TServer> GetAliveServers()
+        {
+            ISet<TServer> aliveServers = new HashSet<TServer>();
+
+            foreach (TServer server in Servers.Values)
+            {
+                if (server.Alive) aliveServers.Add(server);
+            }
+
+            return aliveServers.ToImmutableHashSet();
+        }
+
+        protected void DeclareDead(string serverId)
+        {
+            TServer server = GetAliveServer(serverId);
+            server.DeclareDead();
+        }
+
+        protected void ElectNewMaster(string partitionId, string newMasterId)
+        {
+            Partition partition = GetPartition(partitionId);
+            partition.ElectNewMaster(newMasterId);
         }
 
         public override string ToString()
@@ -32,68 +133,6 @@ namespace Utils
                 lines += $"  {partitionEntry.Value}\n";
             }
             return lines;
-        }
-
-        public Partition GetPartition(string partitionId)
-        {
-            if (string.IsNullOrWhiteSpace(partitionId))
-            {
-                throw new ArgumentException($"'{nameof(partitionId)}' cannot be null or whitespace");
-            }
-
-            Partitions.TryGetValue(partitionId, out Partition partition);
-            if (partition == null)
-            {
-                throw new ArgumentException($"Partition '{nameof(partitionId)}' not found.");
-            }
-            return partition;
-        }
-
-        public TServer GetServer(string serverId)
-        {
-            if (string.IsNullOrWhiteSpace(serverId))
-            {
-                throw new ArgumentException($"'{nameof(serverId)}' cannot be null or whitespace");
-            }
-
-            Servers.TryGetValue(serverId, out TServer server);
-            if (server == null)
-            {
-                throw new ArgumentException($"Server '{nameof(serverId)}' not found.");
-            }
-
-            if (!server.Alive)
-            {
-                throw new ServerBindException($"Server '{serverId}' is dead.", ServerBindExceptionStatus.SERVER_DEAD);
-            }
-
-            return server;
-        }
-
-        public ISet<TServer> GetServers()
-        {
-            return Servers.Values.ToHashSet();
-        }
-
-        public void DeclareDead(string serverId)
-        {
-            TServer server = GetServer(serverId);
-            server.DeclareDead();
-
-            // todo
-            foreach (KeyValuePair<string, Partition> partitionPair in Partitions)
-            {
-                Partition partition = partitionPair.Value;
-
-                if (partition.MasterId == serverId)
-                {
-
-                }
-                else if (partition.Contains(serverId))
-                {
-                    
-                }
-            }
         }
     }
 

@@ -15,7 +15,7 @@ namespace Client.Controllers
         {
             IDictionary<string, AsyncUnaryCall<GStoreListGlobalReply>> asyncUnaryCalls = new Dictionary<string, AsyncUnaryCall<GStoreListGlobalReply>>();
 
-            foreach (Domain.Server server in connectionManager.GetServers())
+            foreach (Domain.Server server in connectionManager.GetAliveServers())
             {
                 asyncUnaryCalls.Add(server.Id, server.Stub.ListGlobalAsync(new Empty()));
             }

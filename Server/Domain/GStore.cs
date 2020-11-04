@@ -148,6 +148,11 @@ namespace GStoreServer
             objectLock.ExitWriteLock(lockId);
         }
 
+        public string GetMaster(string partitionId)
+        {
+            return connectionManager.GetPartitionMasterId(partitionId);
+        }
+
         private ReaderWriterLockEnhancedSlim GetObjectLock(GStoreObjectIdentifier gStoreObjectIdentifier)
         {
             return ObjectLocks.GetOrAdd(gStoreObjectIdentifier,

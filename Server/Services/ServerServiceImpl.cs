@@ -87,6 +87,33 @@ namespace GStoreServer.Services
             return reply;
         }
 
+        public override Task<GStoreGetMasterResponse> GetMaster(GStoreGetMasterRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(ExecuteGetMaster(request));
+        }
+
+        public GStoreGetMasterResponse ExecuteGetMaster(GStoreGetMasterRequest request)
+        {
+            Console.WriteLine($"GetMaster request -> PartitionId: {request.PartitionId}");
+            string masterId;
+            try
+            {
+                masterId = gStore.GetMaster(request.PartitionId);
+            }
+            catch (Exception)
+            {
+                masterId = "-1"; //fixme
+            }
+
+            GStoreGetMasterResponse gStoreGetMasterResponse = new GStoreGetMasterResponse
+            {
+                MasterId = masterId
+            };
+
+            return gStoreGetMasterResponse;
+
+        }
+
         class DataObjectIdentifierBuilder
         {
             internal static DataObjectIdentifier FromString(string partitionId, string objectId)

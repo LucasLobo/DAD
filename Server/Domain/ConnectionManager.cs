@@ -16,8 +16,8 @@ namespace GStoreServer.Domain
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
 
-        private static int heartbeatInterval = 10000;
-        private static int gracePeriod = 2000;
+        private static readonly int heartbeatInterval = 10000;
+        private static readonly int gracePeriod = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
         {
@@ -35,6 +35,8 @@ namespace GStoreServer.Domain
                 if (partition.MasterId == selfServerId) masterPartitions.Add(partition.Id);
                 else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
             }
+
+            StartSendingHeartbeats();
         }
 
         public ISet<Server> GetMastersOfPartitionsWhereSelfReplica()

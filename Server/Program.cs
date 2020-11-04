@@ -58,12 +58,6 @@ namespace GStoreServer
 
                 server.Start();
 
-                /////////////////////////////////////////////
-                // If is replica in some partition
-                connectionManager.StartSendingHeartbeats();
-
-                /////////////////////////////////
-
                 Console.WriteLine("GStore server listening on port " + port);
                 Console.WriteLine("Press any key to stop the server...");
 

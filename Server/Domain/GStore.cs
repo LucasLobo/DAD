@@ -36,39 +36,15 @@ namespace GStoreServer
                 ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
                 int lockId = objectLock.EnterWriteLock();
 
-                // Get all replicas associated to this Partition
-                IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(gStoreObjectIdentifier.PartitionId);
-
                 // Send lock requests to all remote objects
-                IDictionary<string, Task<int>> lockTasks = new Dictionary<string, Task<int>>();
-                foreach (Server replica in replicas)
-                {
-                    lockTasks.Add(replica.Id, LockController.Execute(replica.Stub, gStoreObjectIdentifier));
-                }
-
-                // Await for lock requests and save their values
-                IDictionary<string, int> lockValues = new Dictionary<string, int>();
-                foreach (KeyValuePair<string, Task<int>> lockTaskPair in lockTasks)
-                {
-                    lockValues.Add(lockTaskPair.Key, await lockTaskPair.Value);
-                }
+                IDictionary<string, int> replicaLocks = await LockController.ExecuteAsync(connectionManager, gStoreObjectIdentifier);
 
                 // Once lock confirmations arrive, write to local object and unlock it
                 GStoreObjectReplica gStoreObjectReplica = AddOrUpdate(gStoreObjectIdentifier, newValue, true);
                 objectLock.ExitWriteLock(lockId);
 
                 // Send write requests to all remote objects
-                IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
-                foreach (Server replica in replicas)
-                {
-                    writeTasks.Add(replica.Id, WriteReplicaController.Execute(replica.Stub, gStoreObjectReplica.Object, lockValues[replica.Id]));
-                }
-
-                // Await lock write requests
-                foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)
-                {
-                    await writeTaskPair.Value;
-                }
+                await WriteReplicaController.ExecuteAsync(connectionManager, gStoreObjectReplica.Object, replicaLocks);
             }
             catch (Exception e)
             {

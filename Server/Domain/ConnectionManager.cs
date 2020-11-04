@@ -16,8 +16,8 @@ namespace GStoreServer.Domain
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
 
-        private static readonly int heartbeatInterval = 10000;
-        private static readonly int gracePeriod = 2000;
+        private static readonly int HEARTBEAT_INTERVAL = 1000;
+        private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
         {
@@ -126,12 +126,12 @@ namespace GStoreServer.Domain
 
         public async void StartSendingHeartbeats()
         {
-            await Task.Delay(gracePeriod);
+            await Task.Delay(GRACE_PERIOD);
 
             while (true)
             {
                 await SendHeartbeats();
-                await Task.Delay(heartbeatInterval);
+                await Task.Delay(HEARTBEAT_INTERVAL);
             }
         }
 
@@ -154,7 +154,6 @@ namespace GStoreServer.Domain
                     //penso que com o freeze vai lançar a deadline exceeded e quando crasha lança a internal
                     if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
                     {
-                        Console.WriteLine("" + exception.StatusCode.ToString());
                         Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");
                         DeclareDead(heartbeatResponse.Key);
                     }
@@ -162,6 +161,7 @@ namespace GStoreServer.Domain
                     {
                         Console.WriteLine($"Grpc Exception Occured");
                         Console.WriteLine(exception);
+                        throw exception;
                     }
                 }
             }
@@ -172,7 +172,7 @@ namespace GStoreServer.Domain
             await server.Stub.HeartBeatAsync(new HeartBeatRequest
             {
                 ServerId = selfServerId
-            },  deadline: DateTime.UtcNow.AddMilliseconds(heartbeatInterval));
+            },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_INTERVAL));
         }
     }
 }

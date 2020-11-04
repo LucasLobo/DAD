@@ -108,14 +108,22 @@ namespace Utils
 
         protected void DeclareDead(string serverId)
         {
-            TServer server = GetAliveServer(serverId);
-            server.DeclareDead();
+            TServer server = GetServer(serverId);
+            lock (server)
+            {
+                server.DeclareDead();
+            }
         }
 
         protected void ElectNewMaster(string partitionId, string newMasterId)
         {
             Partition partition = GetPartition(partitionId);
-            partition.ElectNewMaster(newMasterId);
+            lock (partition)
+            {
+                TServer oldMaster = GetServer(partition.MasterId);
+                if (oldMaster.Alive) throw new Exception($"Master '{oldMaster.Id}' is alive and cannot be replaced.");
+                partition.ElectNewMaster(newMasterId);
+            }
         }
 
         public override string ToString()

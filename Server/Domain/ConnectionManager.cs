@@ -140,7 +140,7 @@ namespace GStoreServer.Domain
             IDictionary<string, Task> heartbeatTasks = new Dictionary<string, Task>();
             foreach (Domain.Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
             {
-                heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer, selfServerId));
+                heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer));
             }
 
             foreach (KeyValuePair<string, Task> heartbeatResponse in heartbeatTasks)
@@ -154,6 +154,7 @@ namespace GStoreServer.Domain
                     //penso que com o freeze vai lançar a deadline exceeded e quando crasha lança a internal
                     if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
                     {
+                        Console.WriteLine("" + exception.StatusCode.ToString());
                         Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");
                         DeclareDead(heartbeatResponse.Key);
                     }
@@ -166,7 +167,7 @@ namespace GStoreServer.Domain
             }
         }
 
-        private async Task SendHeartbeat(Domain.Server server, string serverId)
+        private async Task SendHeartbeat(Domain.Server server)
         {
             await server.Stub.HeartBeatAsync(new HeartBeatRequest
             {

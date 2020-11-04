@@ -4,6 +4,8 @@ import "google/protobuf/empty.proto";
 service MasterReplicaService {
     rpc Lock (LockRequest) returns (LockReply);
     rpc Write (WriteRequest) returns (google.protobuf.Empty);
+    rpc HeartBeat (HeartBeatRequest) returns (google.protobuf.Empty);
+    rpc Crash (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 message ObjectIdentifierDto {
@@ -27,4 +29,8 @@ message LockReply {
 message WriteRequest {
     int32 lock_id = 1;
     ObjectDto object = 2;
+}
+
+message HeartBeatRequest {
+    string server_id = 1;
 }

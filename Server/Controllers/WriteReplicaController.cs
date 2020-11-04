@@ -1,3 +1,5 @@
+using GStoreServer.Domain;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Utils;
 
@@ -5,7 +7,7 @@ namespace GStoreServer.Controllers
 {
     class WriteReplicaController
     {
-        public static async Task Execute(MasterReplicaService.MasterReplicaServiceClient Stub, GStoreObject gStoreObject, int lockId)
+        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, string replicaId, GStoreObject gStoreObject, int lockId)
         {
             WriteRequest writeRequest = new WriteRequest
             {
@@ -21,7 +23,25 @@ namespace GStoreServer.Controllers
                 }
             };
 
-            await Stub.WriteAsync(writeRequest);
+            Server replica = connectionManager.GetAliveServer(replicaId);
+            await replica.Stub.WriteAsync(writeRequest);
+        }
+
+        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject, IDictionary<string, int> replicaLocks)
+        {
+            IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
+            foreach(KeyValuePair<string, int> replicaLock in replicaLocks) 
+            {
+                string replicaId = replicaLock.Key;
+                int lockId = replicaLock.Value;
+                writeTasks.Add(replicaId, ExecuteReplicaAsync(connectionManager, replicaId, gStoreObject, lockId));
+            }
+
+            // Await lock write requests
+            foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)
+            {
+                await writeTaskPair.Value;
+            }
         }
     }
 }

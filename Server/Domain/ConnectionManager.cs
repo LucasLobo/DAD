@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Linq;
 using Utils;
 
@@ -14,6 +15,10 @@ namespace GStoreServer.Domain
 
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
+
+        private static readonly int HEARTBEAT_INTERVAL = 1000;
+        private static readonly int GRACE_PERIOD = 2000;
+
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
         {
             if (string.IsNullOrWhiteSpace(selfServerId))
@@ -30,6 +35,8 @@ namespace GStoreServer.Domain
                 if (partition.MasterId == selfServerId) masterPartitions.Add(partition.Id);
                 else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
             }
+
+            StartSendingHeartbeats();
         }
 
         public ISet<Server> GetMastersOfPartitionsWhereSelfReplica()
@@ -115,6 +122,57 @@ namespace GStoreServer.Domain
             }
 
             return toString;
+        }
+
+        public async void StartSendingHeartbeats()
+        {
+            await Task.Delay(GRACE_PERIOD);
+
+            while (true)
+            {
+                await SendHeartbeats();
+                await Task.Delay(HEARTBEAT_INTERVAL);
+            }
+        }
+
+        private async Task SendHeartbeats()
+        {
+            IDictionary<string, Task> heartbeatTasks = new Dictionary<string, Task>();
+            foreach (Domain.Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
+            {
+                heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer));
+            }
+
+            foreach (KeyValuePair<string, Task> heartbeatResponse in heartbeatTasks)
+            {
+                try
+                {
+                   await heartbeatResponse.Value;
+                }
+                catch (Grpc.Core.RpcException exception)
+                {
+                    //penso que com o freeze vai lançar a deadline exceeded e quando crasha lança a internal
+                    if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
+                    {
+                        Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");
+                        DeclareDead(heartbeatResponse.Key);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Grpc Exception Occured");
+                        Console.WriteLine(exception);
+                        throw exception;
+                    }
+                }
+            }
+        }
+
+        private async Task SendHeartbeat(Domain.Server server)
+        {
+            await server.Stub.HeartBeatAsync(new HeartBeatRequest
+            {
+                ServerId = selfServerId
+            },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_INTERVAL));
         }
     }
 }

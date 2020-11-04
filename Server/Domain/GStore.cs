@@ -3,6 +3,7 @@ using GStoreServer.Domain;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Utils;
@@ -28,7 +29,7 @@ namespace GStoreServer
             {
                 if (!connectionManager.IsMasterForPartition(gStoreObjectIdentifier.PartitionId))
                 {
-                    // throw not master error
+                    throw new Exception("Not master");
                 }
 
                 // Acquire lock on local object
@@ -36,7 +37,7 @@ namespace GStoreServer
                 int lockId = objectLock.EnterWriteLock();
 
                 // Get all replicas associated to this Partition
-                ISet<Server> replicas = connectionManager.GetPartitionReplicas(gStoreObjectIdentifier.PartitionId);
+                IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(gStoreObjectIdentifier.PartitionId);
 
                 // Send lock requests to all remote objects
                 IDictionary<string, Task<int>> lockTasks = new Dictionary<string, Task<int>>();

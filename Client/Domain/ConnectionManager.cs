@@ -1,60 +1,51 @@
 using Utils;
 using System.Collections.Generic;
+using System;
 
 namespace Client.Domain
 {
     class ConnectionManager : GenericConnectionManager<Server, GStoreService.GStoreServiceClient>
     {
 
-        private string attachedServerId;
+        private Server attachedServer;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions) : base(servers, partitions)
         {
         }
 
+
         public Server ChooseServerForRead(string partitionId, string serverId)
         {
-            Partition partition = GetPartition(partitionId);
+            _ = GetPartition(partitionId); // throws exception if partition doesn't exist
 
-            if (attachedServerId == null)
+            if (attachedServer != null && PartitionContainsAlive(partitionId, attachedServer.Id))
             {
-                if (serverId == "-1")
-                {
-                    throw new ServerBindException("Not attached to any server and no default server is provided.");
-                }
-                else if (!partition.Contains(serverId))
-                {
-                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");
-                }
-                else
-                {
-                    attachedServerId = serverId;
-                }
+                return attachedServer;
             }
 
-            else if (!partition.Contains(attachedServerId))
+            Server defaultServer = null;
+            if (serverId != "-1")
             {
-                if (serverId == "-1")
-                {
-                    throw new ServerBindException("Attached server '" + attachedServerId + "' is not part of the partition '" + partitionId + "' and no default server is provided.");
-                }
-                else if (!partition.Contains(serverId))
-                {
-                    throw new ServerBindException("Default server '" + serverId + "' is not part of partition '" + partitionId + "'.");
-                }
-                else
-                {
-                    attachedServerId = serverId;
-                }
+                defaultServer = GetServer(serverId);
             }
 
-            return GetServer(attachedServerId);
+            if (defaultServer != null && PartitionContainsAlive(partitionId, defaultServer.Id))
+            {
+                attachedServer = defaultServer;
+                return attachedServer;
+            }
+
+            throw new ServerBindException($"No valid attached or default server. Partition: {partitionId} | AttachedServer: ({attachedServer}) | DefaultServer: {serverId}");
+            // Choose a valid server if needed
         }
 
+
+        // Throws exception if partitionId is not valid or if master server is dead
         public Server ChooseServerForWrite(string partitionId)
         {
             Partition partition = GetPartition(partitionId);
-            return GetServer(partition.MasterId);
+            attachedServer = GetAliveServer(partition.MasterId);
+            return attachedServer;
         }
     }
 }

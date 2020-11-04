@@ -47,5 +47,27 @@ namespace GStoreServer.Services
             gStore.WriteReplica(gStoreObjectIdentifier, request.Object.Value, request.LockId);
             return new Empty();
         }
+
+        public override Task<Empty> HeartBeat(HeartBeatRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(ExecuteHeartbeat(request));
+        }
+
+        private Empty ExecuteHeartbeat(HeartBeatRequest request)
+        {
+            Console.WriteLine($"HeartBeat Replica request -> ServerId: {request.ServerId}");
+            return new Empty();
+        }
+
+        public override Task<Empty> Crash(Empty request, ServerCallContext context)
+        {
+            return Task.FromResult(ExecuteCrash(request));
+        }
+
+        private Empty ExecuteCrash(Empty request)
+        {
+            Console.WriteLine($"Crash Replica request");
+            return new Empty();
+        }
     }
 }

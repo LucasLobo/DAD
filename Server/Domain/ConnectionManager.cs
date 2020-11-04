@@ -30,8 +30,6 @@ namespace GStoreServer.Domain
                 if (partition.MasterId == selfServerId) masterPartitions.Add(partition.Id);
                 else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
             }
-
-            DeclareDead("s-1");
         }
 
         public ISet<Server> GetMastersOfPartitionsWhereSelfReplica()

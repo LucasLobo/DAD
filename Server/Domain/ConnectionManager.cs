@@ -1,5 +1,8 @@
+using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Utils;
 
 namespace GStoreServer.Domain
@@ -13,6 +16,10 @@ namespace GStoreServer.Domain
 
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
+
+        private static int heartbeatInterval = 10000;
+        private static int gracePeriod = 2000;
+
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, ISet<string> masterPartitions, ISet<string> replicaPartitions, string selfServerId) : base(servers, partitions)
         {
             if (string.IsNullOrWhiteSpace(selfServerId))
@@ -87,6 +94,55 @@ namespace GStoreServer.Domain
             }
 
             return toString;
+        }
+
+        public async void StartSendingHeartbeats()
+        {
+            await Task.Delay(gracePeriod);
+
+            while (true)
+            {
+                await SendHeartbeats();
+                await Task.Delay(heartbeatInterval);
+            }
+        }
+
+        private async Task SendHeartbeats()
+        {
+            IDictionary<string, Task> heartbeatTasks = new Dictionary<string, Task>();
+            foreach (Domain.Server masterServer in GetMastersOfSelfReplicaPartitions())
+            {
+                heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer, selfServerId));
+            }
+
+            foreach (KeyValuePair<string, Task> heartbeatResponse in heartbeatTasks)
+            {
+                try
+                {
+                   await heartbeatResponse.Value;
+                }
+                catch (Grpc.Core.RpcException exception)
+                {
+                    if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
+                    {
+                        Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");
+                        DeclareDead(heartbeatResponse.Key);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Grpc Exception Occured");
+                        Console.WriteLine(exception);
+                    }
+                }
+            }
+        }
+
+        private async Task SendHeartbeat(Domain.Server server, string serverId)
+        {
+            await server.Stub.HeartBeatAsync(new HeartBeatRequest
+            {
+                ServerId = selfServerId
+            },  deadline: DateTime.UtcNow.AddMilliseconds(heartbeatInterval));
         }
     }
 }

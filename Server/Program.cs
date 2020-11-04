@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
@@ -57,6 +58,13 @@ namespace GStoreServer
                 };
 
                 server.Start();
+
+                /////////////////////////////////////////////
+                // If is replica in some partition
+                connectionManager.StartSendingHeartbeats();
+
+                /////////////////////////////////
+
                 Console.WriteLine("GStore server listening on port " + port);
                 Console.WriteLine("Press any key to stop the server...");
 

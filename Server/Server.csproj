@@ -13,6 +13,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Collections" Version="4.3.0" />
     <Protobuf Include="..\Utils\protos\GStoreService.proto" ProtoRoot=".." GrpcServices="Server" />
     <Protobuf Include="..\Utils\protos\PuppetMasterServerService.proto" ProtoRoot=".." GrpcServices="Server" />
     <Protobuf Include="..\Utils\protos\MasterReplicaService.proto" ProtoRoot=".." GrpcServices="Both" />

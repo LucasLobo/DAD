@@ -58,33 +58,37 @@ namespace GStoreServer.Domain
 
         public new void DeclareDead(string deadServerId)
         {
-            if (deadServerId == selfServerId)
+            lock(this)
             {
-                throw new Exception("Self Declared Dead");
-            }
-
-            base.DeclareDead(deadServerId);
-
-            foreach (Partition partition in Partitions.Values)
-            {
-                if (partition.MasterId == deadServerId)
+                if (deadServerId == selfServerId)
                 {
-                    List<string> sortedServerIds = partition.GetSortedServers();
-                    int newMasterIndex = sortedServerIds.IndexOf(deadServerId);
-                    string newMasterId;
-                    do
-                    {
-                        newMasterIndex = (newMasterIndex + 1) % sortedServerIds.Count;
-                        newMasterId = sortedServerIds.ElementAt(newMasterIndex);
-                    } while (newMasterId != selfServerId && !GetServer(newMasterId).Alive);
+                    throw new Exception("Self Declared Dead");
+                }
 
-                    ElectNewMaster(partition.Id, newMasterId);
+                base.DeclareDead(deadServerId);
+
+                foreach (Partition partition in Partitions.Values)
+                {
+                    if (partition.MasterId == deadServerId)
+                    {
+                        List<string> sortedServerIds = partition.GetSortedServers();
+                        int newMasterIndex = sortedServerIds.IndexOf(deadServerId);
+                        string newMasterId;
+                        do
+                        {
+                            newMasterIndex = (newMasterIndex + 1) % sortedServerIds.Count;
+                            newMasterId = sortedServerIds.ElementAt(newMasterIndex);
+                        } while (newMasterId != selfServerId && !GetServer(newMasterId).Alive);
+
+                        ElectNewMaster(partition.Id, newMasterId);
+                    }
                 }
             }
-
         }
 
-        protected new void ElectNewMaster(string partitionId, string newMasterId)
+
+        // Caller ALWAYS should ensure mutual exclusion within this function
+        private new void ElectNewMaster(string partitionId, string newMasterId)
         {
             // vvv Redundant vvv
             Partition partition = GetPartition(partitionId);
@@ -151,7 +155,7 @@ namespace GStoreServer.Domain
                 }
                 catch (Grpc.Core.RpcException exception)
                 {
-                    //penso que com o freeze vai lançar a deadline exceeded e quando crasha lança a internal
+                    //penso que com o freeze vai lanÃ§ar a deadline exceeded e quando crasha lanÃ§a a internal
                     if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
                     {
                         Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");

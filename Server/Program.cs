@@ -29,9 +29,8 @@ namespace GStoreServer
             try
             {
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-                Console.WriteLine(args[0] + " : " + args[1] + " : " + args[2] + " : " + args[3] + " : " + args[4]);
-
                 myServerId = args[0];
+                Console.WriteLine($"ServerId: {myServerId}");
                 string[] protocolAndHostnameAndPort = args[1].Split("://");
                 string[] hotnameAndPort = protocolAndHostnameAndPort[1].Split(":");
                 int port = int.Parse(hotnameAndPort[1]);
@@ -79,8 +78,6 @@ namespace GStoreServer
 
             IDictionary<string, Domain.Server> servers = new Dictionary<string, Domain.Server>();
             IDictionary<string, Partition> partitions = new Dictionary<string, Partition>();
-            ISet<string> masterPartitions = new HashSet<string>();
-            ISet<string> replicaPartitions = new HashSet<string>();
 
             for (int i = 0; i < serversConfiguration.Count; i++)
             {
@@ -108,13 +105,9 @@ namespace GStoreServer
                 }
 
                 Partition partition = new Partition(partitionId, masterId, partitionReplicaSet);
-
-                if (masterId == myServerId) masterPartitions.Add(partitionId);
-                else if (partition.Contains(myServerId)) replicaPartitions.Add(partitionId);
-
                 partitions.Add(partitionId, partition);
             }
-            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, masterPartitions, replicaPartitions, myServerId);
+            ConnectionManager connectionManager = new ConnectionManager(servers, partitions, myServerId);
             return connectionManager;
         }
     }

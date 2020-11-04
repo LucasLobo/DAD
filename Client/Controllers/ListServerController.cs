@@ -13,7 +13,7 @@ namespace Client.Controllers
         public static async Task<HashSet<GStoreObjectReplica>> Execute(ConnectionManager connectionManager, string serverId)
         {
             Server server;
-            server = connectionManager.GetServer(serverId);
+            server = connectionManager.GetAliveServer(serverId);
             GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
 
             HashSet<GStoreObjectReplica> gStoreObjectReplicas = new HashSet<GStoreObjectReplica>();

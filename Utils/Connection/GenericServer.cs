@@ -12,12 +12,17 @@ namespace Utils
 
         protected GenericServer(string id, T stub)
         {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new ArgumentException($"'{id}' cannot be null or whitespace", nameof(id));
+            }
+
             Id = id;
             Alive = true;
-            Stub = stub;
+            Stub = stub ?? throw new ArgumentNullException($"'{nameof(stub)}' cannot be null", nameof(stub));
         }
 
-        public void DeclareDead()
+        protected internal void DeclareDead()
         {
             Alive = false;
         }

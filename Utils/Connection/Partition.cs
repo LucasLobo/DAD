@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace Utils
 {
@@ -9,39 +11,68 @@ namespace Utils
 
         public string MasterId { get; set; }
 
-        public ISet<string> ReplicaSet { get; }
+        public SortedSet<string> ReplicaSet { get; }
 
         public Partition(string id, string masterId, ISet<string> replicaSet)
         {
+
             if (string.IsNullOrWhiteSpace(id))
             {
-                throw new ArgumentException($"'{nameof(id)}' cannot be null or whitespace", nameof(id));
+                throw new ArgumentException($"'{id}' cannot be null or whitespace", nameof(id));
             }
 
             if (string.IsNullOrWhiteSpace(masterId))
             {
-                throw new ArgumentException($"'{nameof(masterId)}' cannot be null or whitespace", nameof(masterId));
+                throw new ArgumentException($"'{masterId}' cannot be null or whitespace", nameof(masterId));
+            }
+
+            if (replicaSet == null || replicaSet.Count == 0)
+            {
+                throw new ArgumentException($"{nameof(replicaSet)} cannot be null or empty", nameof(replicaSet));
             }
 
             Id = id;
             MasterId = masterId;
-            ReplicaSet = replicaSet ?? throw new ArgumentNullException(nameof(replicaSet));
+            ReplicaSet = new SortedSet<string>(replicaSet);
         }
 
-        public bool Contains(string serverId)
+        public List<string> GetSortedServers()
+        {
+            SortedSet<string> serverSet = new SortedSet<string>(ReplicaSet)
+            {
+                MasterId
+            };
+
+            return serverSet.ToList();
+        }
+
+        public ImmutableList<string> GetAllReplicas()
+        {
+            return ReplicaSet.ToImmutableList();
+        }
+
+        // Dangerous - returns true even when a server is dead
+        protected internal bool Contains(string serverId)
         {
             if (string.IsNullOrEmpty(serverId)) return false;
             return (MasterId == serverId) || ReplicaSet.Contains(serverId);
         }
 
-        public void DeclareDead(string serverId)
+        public void ElectNewMaster(string serverId)
         {
             if (string.IsNullOrWhiteSpace(serverId))
             {
-                throw new ArgumentException($"'{nameof(serverId)}' cannot be null or whitespace");
+                throw new ArgumentException($"'{serverId}' cannot be null or whitespace", nameof(serverId));
             }
 
-            // todo
+            if (!ReplicaSet.Contains(serverId))
+            {
+                throw new ArgumentException($"'{serverId}' is not a replica of the partition '{Id}'", nameof(serverId));
+            }
+
+            ReplicaSet.Add(MasterId);
+            ReplicaSet.Remove(serverId);
+            MasterId = serverId;
         }
 
         public override bool Equals(object obj)

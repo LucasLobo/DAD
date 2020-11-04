@@ -28,7 +28,6 @@ namespace Client
         {
             ConnectionManager connectionManager = CreateClientConnectionManager(networkConfiguration);
             Console.WriteLine(connectionManager);
-            Console.WriteLine();
             return connectionManager;
         }
 
@@ -60,7 +59,6 @@ namespace Client
 
                 CommandDispatcher commandDispatcher = new CommandDispatcher();
                 ConnectionManager connectionManager = CreateConnectionManager(networkConfiguration);
-                Console.WriteLine(connectionManager);
                 RegisterCommands(commandDispatcher, connectionManager);
 
                 Grpc.Core.Server server = new Grpc.Core.Server
@@ -124,14 +122,14 @@ namespace Client
             {
                 string partitionId = partitionConfig.Item1;
                 string masterId = partitionConfig.Item2.ElementAt(0);
-                ISet<string> partitionServerSet = new HashSet<string>();
+                ISet<string> partitionReplicaSet = new HashSet<string>();
 
                 foreach (string serverId in partitionConfig.Item2)
                 {
-                    partitionServerSet.Add(serverId);
+                    if (serverId != masterId) partitionReplicaSet.Add(serverId);
                 }
 
-                Partition partition = new Partition(partitionId, masterId, partitionServerSet);
+                Partition partition = new Partition(partitionId, masterId, partitionReplicaSet);
                 partitions.Add(partitionId, partition);
             }
 

@@ -107,7 +107,7 @@ namespace GStoreServer.Services
         class DataObjectBuilder
         {
 
-            internal static DataObject FromString(String partitionId, string objectId, string value)
+            internal static DataObject FromString(string partitionId, string objectId, string value)
             {
                 return new DataObject
                 {

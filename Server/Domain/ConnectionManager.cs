@@ -53,7 +53,10 @@ namespace GStoreServer.Domain
 
         public bool IsMasterForPartition(string partitionId)
         {
-            return masterPartitions.Contains(partitionId);
+            lock(this)
+            {
+                return masterPartitions.Contains(partitionId);
+            }
         }
 
         public new void DeclareDead(string deadServerId)

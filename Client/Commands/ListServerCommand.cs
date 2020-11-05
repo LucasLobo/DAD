@@ -42,7 +42,7 @@ namespace Client.Commands
                 }
                 foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
                 {
-                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {replica.IsMaster}");
+                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {(replica.IsMaster ? "Master" : "Replica")}");
                 }
             }
             catch (ServerBindException e)

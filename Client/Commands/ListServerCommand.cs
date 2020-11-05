@@ -34,8 +34,12 @@ namespace Client.Commands
 
             try
             {
-
                 HashSet<GStoreObjectReplica> gStoreObjectReplicas = await ListServerController.Execute(ConnectionManager, serverId);
+                if (gStoreObjectReplicas == null)
+                {
+                    Console.WriteLine($"=> Server {serverId} crashed.");
+                    return;
+                }
                 foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
                 {
                     Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {replica.IsMaster}");

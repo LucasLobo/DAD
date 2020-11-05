@@ -29,6 +29,7 @@ namespace Client.Controllers
                 }
                 catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
                 {
+                    connectionManager.DeclareDead(request.Key);
                     Console.WriteLine($"Could not establish connection with server {request.Key}");
                 }
             }

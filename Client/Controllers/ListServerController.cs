@@ -12,16 +12,26 @@ namespace Client.Controllers
 
         public static async Task<HashSet<GStoreObjectReplica>> Execute(ConnectionManager connectionManager, string serverId)
         {
-            Server server;
-            server = connectionManager.GetAliveServer(serverId);
-            GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
-
-            HashSet<GStoreObjectReplica> gStoreObjectReplicas = new HashSet<GStoreObjectReplica>();
-            foreach (DataObjectReplica dataObjectReplica in gStoreListServerReply.ObjectReplicas)
+            try
             {
-                gStoreObjectReplicas.Add(CreateObjectReplica(dataObjectReplica));
+                Server server;
+                server = connectionManager.GetAliveServer(serverId);
+                GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
+
+                HashSet<GStoreObjectReplica> gStoreObjectReplicas = new HashSet<GStoreObjectReplica>();
+                foreach (DataObjectReplica dataObjectReplica in gStoreListServerReply.ObjectReplicas)
+                {
+                    gStoreObjectReplicas.Add(CreateObjectReplica(dataObjectReplica));
+                }
+                return gStoreObjectReplicas;
             }
-            return gStoreObjectReplicas;
+            catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+            {
+                connectionManager.DeclareDead(serverId);
+                return null;
+            }
+
+
         }
 
         private static GStoreObjectReplica CreateObjectReplica(DataObjectReplica dataObjectReplica)

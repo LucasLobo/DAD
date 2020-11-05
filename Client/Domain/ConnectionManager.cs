@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System;
 using Client.Controllers;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Immutable;
 
 namespace Client.Domain
 {
@@ -16,29 +18,39 @@ namespace Client.Domain
         }
 
 
-        public Server ChooseServerForRead(string partitionId, string serverId)
+        public Server ChooseServerForRead(string partitionId, string serverId, out Dictionary<string, Server> usedReplicas)
         {
             _ = GetPartition(partitionId); // throws exception if partition doesn't exist
+
+            usedReplicas = new Dictionary<string, Server>();
 
             if (attachedServer != null && PartitionContainsAlive(partitionId, attachedServer.Id))
             {
                 return attachedServer;
             }
 
-            Server defaultServer = null;
+            Server defaultServer;
             if (serverId != "-1")
             {
                 defaultServer = GetServer(serverId);
+
+                if (defaultServer != null && PartitionContainsAlive(partitionId, defaultServer.Id))
+                {
+                    attachedServer = defaultServer;
+                    return attachedServer;
+                }
             }
 
-            if (defaultServer != null && PartitionContainsAlive(partitionId, defaultServer.Id))
+            IImmutableSet<Server> aliveReplicas = GetPartitionAliveReplicas(partitionId);
+            if (aliveReplicas.Count > 0)
             {
-                attachedServer = defaultServer;
+                usedReplicas = aliveReplicas.ToDictionary(r => r.Id, r => r);
+                Random rnd = new Random();
+                attachedServer = aliveReplicas.ElementAt(rnd.Next(0, aliveReplicas.Count));
                 return attachedServer;
             }
 
             throw new ServerBindException($"No valid attached or default server. Partition: {partitionId} | AttachedServer: ({attachedServer}) | DefaultServer: {serverId}");
-            // Choose a valid server if needed
         }
 
 

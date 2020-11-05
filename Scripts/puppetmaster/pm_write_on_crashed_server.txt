@@ -17,4 +17,4 @@ wait 3000
 crash s-1
 wait 7000
 # We start client which will try to write on a dead server.
-client client1 http://localhost:8090 cl_single_write_read.txt
+client client1 http://localhost:8090 cl_single_write_read

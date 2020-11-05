@@ -8,7 +8,7 @@ Notes for running the project:
 1. Build everything as debug. The current setup assumes the client and server .exe files are within the bin/Debug subfolders of their respective folders.
 2. All client scripts must be placed in the same folder as the PCS .exe file.
 3. All Puppetmaster scripts must be placed in the same folder as the Puppetmaster .exe file.
-4. Any file type can be used for scripts. If the file is called "script.txt" then the name "script.txt" must be used, including the extention type.
+4. Only .txt files can be used for scripts. (If you want to call a script file inside a script don't provide the extension type - it will be automatically appended)
 5. The puppetmaster must be shut down before starting a new configuration script.
 
 Other remarks:
@@ -22,4 +22,4 @@ Puppetmaster script run order (restart Puppetmaster after each script):
 3. pm_client_finds_new_master_after_crash.txt
 4. pm_write_on_crashed_server.txt
 
-Please give enough time for all scripts to run completely. Sometimes it might seem that nothing is happening do to a longer wait.
+Please give enough time for all scripts to run completely. **Sometimes it might seem that nothing is happening do to a longer wait**.

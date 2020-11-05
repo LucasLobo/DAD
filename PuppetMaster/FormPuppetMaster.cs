@@ -58,7 +58,7 @@ namespace PuppetMaster
 
         private async void btnRunScript_Click(object sender, EventArgs e)
         {
-            string filename = txtBoxScriptLocation.Text;
+            string filename = txtBoxScriptLocation.Text + ".txt";
             if (string.IsNullOrEmpty(filename)) return;
 
             string[] lines;

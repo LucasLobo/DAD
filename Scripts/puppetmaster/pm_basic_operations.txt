@@ -13,4 +13,4 @@ server s-5 http://localhost:8085 0 0
 # HEARTBEAT_INTERVAL = 500;
 # We allow for servers to start and some heartbeat messages to be sent.
 wait 3000
-client client1 http://localhost:8090 cl_basic_operations.txt
+client client1 http://localhost:8090 cl_basic_operations

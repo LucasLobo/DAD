@@ -3,8 +3,6 @@ using GStoreServer.Domain;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 using Utils;
 
@@ -177,6 +175,11 @@ namespace GStoreServer
             {
                 Console.WriteLine(item.Value);
             }
+        }
+
+        public ConnectionManager GetConnectionManager()
+        {
+            return connectionManager;
         }
     }
 }

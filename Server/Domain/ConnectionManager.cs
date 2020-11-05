@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Utils;
+using System.Timers;
 
 namespace GStoreServer.Domain
 {
@@ -16,7 +17,9 @@ namespace GStoreServer.Domain
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
 
-        private static readonly int HEARTBEAT_INTERVAL = 1000;
+        private IDictionary<string, Timer> replicasWatchdogs = new Dictionary<string, Timer>();
+
+        private static readonly int HEARTBEAT_INTERVAL = 2000;
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -36,7 +39,22 @@ namespace GStoreServer.Domain
                 else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
             }
 
+            InitWatchdogs();
             StartSendingHeartbeats();
+        }
+
+        private async void InitWatchdogs()
+        {
+            await Task.Delay(GRACE_PERIOD);
+
+            foreach (string partitionId in masterPartitions)
+            {
+                Partition serverPartition = GetPartition(partitionId);
+                foreach (string serverId in serverPartition.ReplicaSet)
+                {
+                    replicasWatchdogs.Add(serverId, SetTimer(HEARTBEAT_INTERVAL + 1000, serverId));
+                }
+            }
         }
 
         public ISet<Server> GetMastersOfPartitionsWhereSelfReplica()
@@ -131,7 +149,7 @@ namespace GStoreServer.Domain
         public async void StartSendingHeartbeats()
         {
             await Task.Delay(GRACE_PERIOD);
-
+            
             while (true)
             {
                 await SendHeartbeats();
@@ -142,7 +160,7 @@ namespace GStoreServer.Domain
         private async Task SendHeartbeats()
         {
             IDictionary<string, Task> heartbeatTasks = new Dictionary<string, Task>();
-            foreach (Domain.Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
+            foreach (Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
             {
                 heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer));
             }
@@ -171,12 +189,44 @@ namespace GStoreServer.Domain
             }
         }
 
-        private async Task SendHeartbeat(Domain.Server server)
+        private async Task SendHeartbeat(Server server)
         {
             await server.Stub.HeartBeatAsync(new HeartBeatRequest
             {
                 ServerId = selfServerId
             },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_INTERVAL));
+        }
+
+        public IDictionary<string, Timer> GetReplicasWatchDogs()
+        {
+            return replicasWatchdogs;
+        }
+
+        private Timer SetTimer(int timerInterval, string serverId)
+        {
+            // Create a timer with a two second interval.
+            Timer timer = new Timer(timerInterval);
+            // Hook up the Elapsed event for the timer. 
+            timer.Elapsed += delegate { RemoveReplica(serverId); };
+            timer.Enabled = true;
+            return timer;
+        }
+
+        private void RemoveReplica(string serverId)
+        {
+            Console.WriteLine("Replica is dead -> " + serverId);
+            //Stops and releases resources used by the timer
+            replicasWatchdogs[serverId].Stop();
+            replicasWatchdogs[serverId].Dispose();
+            //Removes timer from watch dog list
+            replicasWatchdogs.Remove(serverId);
+            DeclareDead(serverId);
+        }
+
+        public void ResetTimer(Timer timer)
+        {
+            timer.Stop();
+            timer.Start();
         }
     }
 }

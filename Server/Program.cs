@@ -50,7 +50,7 @@ namespace GStoreServer
                 {
                     GStoreService.BindService(new ServerServiceImpl(gStore)).Intercept(requestInterceptor),
                     MasterReplicaService.BindService(new MasterReplicaServiceImpl(gStore)).Intercept(requestInterceptor),
-                    PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock))
+                    PuppetMasterServerService.BindService(new PuppetMasterServerServiceImpl(freezeLock, connectionManager))
                 },
                     Ports = { new ServerPort(hotnameAndPort[0], port, ServerCredentials.Insecure) }
                 };

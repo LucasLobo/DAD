@@ -8,8 +8,8 @@ namespace PuppetMaster.Controllers.ServerDebugControllers
     {
         public static async Task<Empty> Execute(ConnectionManager connectionManager, string serverId)
         {
-            Domain.Server server = connectionManager.GetServer(serverId);
-            return server.Stub.Unfreeze(new Empty());
+            Server server = connectionManager.GetServer(serverId);
+            return await server.Stub.UnfreezeAsync(new Empty());
         }
     }
 }

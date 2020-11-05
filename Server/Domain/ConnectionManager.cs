@@ -20,6 +20,7 @@ namespace GStoreServer.Domain
         private IDictionary<string, Timer> replicasWatchdogs = new Dictionary<string, Timer>();
 
         private static readonly int HEARTBEAT_INTERVAL = 2000;
+
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -71,7 +72,10 @@ namespace GStoreServer.Domain
 
         public bool IsMasterForPartition(string partitionId)
         {
-            return masterPartitions.Contains(partitionId);
+            lock(this)
+            {
+                return masterPartitions.Contains(partitionId);
+            }
         }
 
         public new void DeclareDead(string deadServerId)
@@ -142,6 +146,8 @@ namespace GStoreServer.Domain
             {
                 toString += " " + partition;
             }
+
+            toString += "\n=========================\n\n";
 
             return toString;
         }

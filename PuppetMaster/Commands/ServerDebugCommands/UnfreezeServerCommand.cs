@@ -37,11 +37,11 @@ namespace PuppetMaster.Commands
                 await UnfreezeServerController.Execute(ConnectionManager, serverId);
                 txtBoxOutput.AppendText(Environment.NewLine + "Unfreeze DONE.");
             }
-            catch (RpcException e)
+            catch (RpcException e) when(e.StatusCode == StatusCode.Internal)
             {
-                txtBoxOutput.AppendText(Environment.NewLine + e.Message);
+                txtBoxOutput.AppendText(Environment.NewLine + serverId + " is not respondig. It will be removed from the system configuration.");
+                ConnectionManager.RemoveServerFromConfiguration(serverId);
             }
-
 
         }
     }

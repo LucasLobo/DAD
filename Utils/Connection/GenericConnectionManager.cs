@@ -50,6 +50,12 @@ namespace Utils
             return replicaSet.ToImmutableHashSet();
         }
 
+        public string GetPartitionMasterId(string partitionId)
+        {
+            Partition partition = GetPartition(partitionId);
+            return partition.MasterId;
+        }
+
         protected Partition GetPartition(string partitionId)
         {
             if (string.IsNullOrWhiteSpace(partitionId))
@@ -106,7 +112,7 @@ namespace Utils
             return aliveServers.ToImmutableHashSet();
         }
 
-        protected void DeclareDead(string serverId)
+        public void DeclareDead(string serverId)
         {
             TServer server = GetServer(serverId);
             lock (server)
@@ -128,7 +134,7 @@ namespace Utils
 
         public override string ToString()
         {
-            string lines = "=== ConnectionManager ===\nServers:\n";
+            string lines = "\n=== ConnectionManager ===\nServers:\n";
 
             foreach (KeyValuePair<string, TServer> serverEntry in Servers)
             {

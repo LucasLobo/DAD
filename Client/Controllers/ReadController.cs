@@ -1,7 +1,6 @@
 using Client.Domain;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Utils;
 
@@ -21,24 +20,25 @@ namespace Client.Controllers
             }
             catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
             {
+                Console.WriteLine($"Server crashed when trying to read object {objectId}. Trying new replica...");
                 connectionManager.DeclareDead(serverId);
                 nonUsedReplicas.Remove(serverId);
                 foreach (KeyValuePair<string, Server> replica in nonUsedReplicas)
                 {
                     try
                     {
+                        Console.WriteLine($"Trying: {replica.Key}");
                         return await SendReadRequest(partitionId, objectId, replica.Value);
                     }
                     catch (Grpc.Core.RpcException exception) when (exception.StatusCode == Grpc.Core.StatusCode.Internal)
                     {
+                        Console.WriteLine($"Server crashed when trying to read object {objectId}. Trying new replica...");
                         connectionManager.DeclareDead(replica.Key);
-                        nonUsedReplicas.Remove(replica.Key);
                         continue;
                     }
                 }
-
-                return null;
             }
+            return null;
         }
 
         private static async Task<GStoreObject> SendReadRequest(string partitionId, string objectId, Server server)

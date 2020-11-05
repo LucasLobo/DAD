@@ -32,12 +32,12 @@ namespace PuppetMaster.Domain
             SetNewPCSConnection(url);
         }
 
-        public void SetNewClientConnection(string url)
+        public void SetNewClientConnection(string clientUsername, string url)
         {
             GrpcChannel channel = GrpcChannel.ForAddress(url);
             PuppetMasterClientService.PuppetMasterClientServiceClient client =
                 new PuppetMasterClientService.PuppetMasterClientServiceClient(channel);
-            clientSet.TryAdd(url, new Client(client));
+            clientSet.TryAdd(clientUsername, new Client(clientUsername, client));
 
             SetNewPCSConnection(url);
         }
@@ -80,12 +80,12 @@ namespace PuppetMaster.Domain
             return server;
         }
 
-        public Client GetClient(string clientURL)
+        public Client GetClient(string username)
         {
-            bool foundClient = clientSet.TryGetValue(clientURL, out Client client);
+            bool foundClient = clientSet.TryGetValue(username, out Client client);
             if (!foundClient)
             {
-                throw new NodeBindException("Client '" + clientURL + "' not found.");
+                throw new NodeBindException("Client '" + username + "' not found.");
 
             }
             return client;
@@ -105,6 +105,16 @@ namespace PuppetMaster.Domain
         public string GetPCSUrlFromAnUrl(string url)
         {
             return url.Split(":").ElementAt(0) + ":" + url.Split(":").ElementAt(1) + ":" + PCSPORT;
+        }
+
+        public bool RemoveServerFromConfiguration(string serverId)
+        {
+            return serverSet.TryRemove(serverId, out _);
+        }
+
+        public bool RemoveClientFromConfiguration(string username)
+        {
+            return clientSet.TryRemove(username, out _);
         }
     }
 

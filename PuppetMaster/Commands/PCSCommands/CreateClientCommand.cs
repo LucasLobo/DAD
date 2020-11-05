@@ -36,7 +36,7 @@ namespace PuppetMaster.Commands
             string servers = SystemConfiguration.GetInstance().GetServersArgument();
 
             await CreateClientController.Execute(ConnectionManager, username, clientURL, scriptFile, servers, partitions);
-            ConnectionManager.SetNewClientConnection(arguments[1]);
+            ConnectionManager.SetNewClientConnection(username, clientURL);
             txtBoxOutput.AppendText(Environment.NewLine + "Client Created.");
         }
     }

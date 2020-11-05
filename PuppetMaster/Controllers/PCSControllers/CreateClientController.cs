@@ -15,7 +15,7 @@ namespace PuppetMaster.Controllers.PCSControllers
                 ScriptFile = scriptFile,
                 NetworkConfiguration = servers + partitions
             };
-            pcs.Stub.Client(createClientRequest);
+            await pcs.Stub.ClientAsync(createClientRequest);
         }
     }
 }

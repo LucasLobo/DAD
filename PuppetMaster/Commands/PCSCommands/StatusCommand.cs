@@ -29,7 +29,7 @@ namespace PuppetMaster.Commands
                 return;
             }
 
-            await StatusController.Execute(ConnectionManager);
+            await StatusController.Execute(txtBoxOutput, ConnectionManager);
 
             txtBoxOutput.AppendText(Environment.NewLine + "Status DONE.");
         }

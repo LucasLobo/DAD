@@ -21,3 +21,5 @@ Puppetmaster script run order (restart Puppetmaster after each script):
 2. pm_replica_discover_master_crash.txt
 3. pm_client_finds_new_master_after_crash.txt
 4. pm_write_on_crashed_server.txt
+
+Please give enough time for all scripts to run completely. Sometimes it might seem that nothing is happening do to a longer wait.

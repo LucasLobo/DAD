@@ -17,6 +17,7 @@ namespace GStoreServer.Domain
         private readonly ISet<string> replicaPartitions;
 
         private static readonly int HEARTBEAT_INTERVAL = 5000;
+        private static readonly int HEARTBEAT_TIMEOUT = 1000;
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -116,6 +117,7 @@ namespace GStoreServer.Domain
         {
             string toString = base.ToString();
 
+            toString += "\nServerId: " + selfServerId;
             toString += "\nPartitions where (self) master:";
             foreach(string partition in masterPartitions)
             {
@@ -140,7 +142,7 @@ namespace GStoreServer.Domain
             while (true)
             {
                 await SendHeartbeats();
-                await Task.Delay(HEARTBEAT_INTERVAL);
+                await Task.Delay(HEARTBEAT_TIMEOUT);
             }
         }
 

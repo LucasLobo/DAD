@@ -71,6 +71,7 @@ namespace PuppetMaster
 
                 foreach (string line in lines)
                 {
+                    if (line[0].Equals('#')) continue;
                     string lineLower = line.ToLower();
                     bool isConcurrent = CommandDispatcher.IsConcurrent(lineLower);
 

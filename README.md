@@ -18,5 +18,6 @@ Other remarks:
 
 Puppetmaster script run order (restart Puppetmaster after each script):
 1. pm_basic_operations.txt
-1. pm_replica_discover_master_crash.txt
-2. pm_client_finds_new_master_after_crash.txt
+2. pm_replica_discover_master_crash.txt
+3. pm_client_finds_new_master_after_crash.txt
+4. pm_write_on_crashed_server.txt

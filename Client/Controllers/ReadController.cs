@@ -1,5 +1,7 @@
 using Client.Domain;
 using System;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using Utils;
 
@@ -9,20 +11,50 @@ namespace Client.Controllers
     {
         public static async Task<GStoreObject> Execute(ConnectionManager connectionManager, string partitionId, string serverId, string objectId)
         {
-            Server server = connectionManager.ChooseServerForRead(partitionId, serverId);
-            Console.WriteLine($"Trying: {server.Id}");
-            GStoreReadRequest gStoreReadRequest = new GStoreReadRequest()
+
+            Server server = null;
+            try
             {
-                ObjectIdentifier = new DataObjectIdentifier
+                server = connectionManager.ChooseServerForRead(partitionId, serverId);
+                if (!server.Alive) server = null;
+            }
+            catch (ServerBindException)
+            {
+                // nothing
+            }
+
+            while (true)
+            {
+                if (server == null)
                 {
-                    PartitionId = partitionId,
-                    ObjectId = objectId
+                    IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(partitionId);
+                    Random rnd = new Random();
+                    server = replicas.ElementAt(rnd.Next(0, replicas.Count));
                 }
-            };
 
-            GStoreReadReply gStoreReadReply = await server.Stub.ReadAsync(gStoreReadRequest);
+                Console.WriteLine($"Trying: {server.Id}");
+                GStoreReadRequest gStoreReadRequest = new GStoreReadRequest()
+                {
+                    ObjectIdentifier = new DataObjectIdentifier
+                    {
+                        PartitionId = partitionId,
+                        ObjectId = objectId
+                    }
+                };
 
-            return CreateObject(gStoreReadReply.Object);
+                try
+                {
+                    GStoreReadReply gStoreReadReply = await server.Stub.ReadAsync(gStoreReadRequest);
+
+                    return CreateObject(gStoreReadReply.Object);
+                }
+                catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+                {
+                    await connectionManager.DeclareDead(server.Id);
+                    server = null;
+                }
+
+            }
         }
 
         private static GStoreObject CreateObject(DataObject gStoreObject)

@@ -30,10 +30,11 @@ namespace PuppetMaster.Controllers.PCSControllers
                 try
                 {
                     statusReplies.Add(await request.Value.ResponseAsync);
-                } catch (Exception _)
+                }
+                catch (RpcException e) when (e.StatusCode == StatusCode.Internal)
                 {
                     output.AppendText(Environment.NewLine + request.Key + " is not respondig. It will be removed from the system configuration.");
-                    if ( !connectionManager.RemoveServerFromConfiguration(request.Key) )
+                    if (!connectionManager.RemoveServerFromConfiguration(request.Key))
                     { // if didn't successfully removed from servers is because it was a client
                         connectionManager.RemoveClientFromConfiguration(request.Key);
                     }

@@ -1,5 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using GStoreServer.Domain;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,9 +10,11 @@ namespace GStoreServer.Services
     class PuppetMasterServerServiceImpl : PuppetMasterServerService.PuppetMasterServerServiceBase
     {
         private readonly ManualResetEventSlim freezeLock;
-        public PuppetMasterServerServiceImpl(ManualResetEventSlim freezeLock)
+        private readonly ConnectionManager connectionManager;
+        public PuppetMasterServerServiceImpl(ManualResetEventSlim freezeLock, ConnectionManager connectionManager)
         {
             this.freezeLock = freezeLock ?? throw new ArgumentNullException("FreezeLock cannot be null.");
+            this.connectionManager = connectionManager;
         }
 
         public override Task<Empty> Crash(Empty request, ServerCallContext context)
@@ -34,7 +37,7 @@ namespace GStoreServer.Services
 
         public override Task<Empty> Status(Empty request, ServerCallContext context)
         {
-            Console.WriteLine("STATUS");
+            Console.WriteLine(connectionManager);
             return Task.FromResult(new Empty());
         }
 

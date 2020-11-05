@@ -66,7 +66,7 @@ namespace Client
                 {
                     Services =
                     {
-                        PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl())
+                        PuppetMasterClientService.BindService(new PuppetmasterClientServiceImpl(connectionManager))
                     },
                     Ports = { new ServerPort(hostnameAndPort[0], port, ServerCredentials.Insecure) }
                 };

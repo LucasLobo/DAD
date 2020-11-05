@@ -38,7 +38,15 @@ namespace GStoreServer.Controllers
             IDictionary<string, int> lockValues = new Dictionary<string, int>();
             foreach (KeyValuePair<string, Task<int>> lockTaskPair in lockTasks)
             {
-                lockValues.Add(lockTaskPair.Key, await lockTaskPair.Value);
+                string replicaId = lockTaskPair.Key;
+                try
+                {
+                    lockValues.Add(replicaId, await lockTaskPair.Value);
+                }
+                catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+                {
+                    connectionManager.DeclareDead(replicaId);
+                }
             }
             return lockValues;
         }

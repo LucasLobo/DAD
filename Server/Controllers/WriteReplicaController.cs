@@ -40,7 +40,15 @@ namespace GStoreServer.Controllers
             // Await lock write requests
             foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)
             {
-                await writeTaskPair.Value;
+                string replicaId = writeTaskPair.Key;
+                try
+                {
+                    await writeTaskPair.Value;
+                }
+                catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+                {
+                    connectionManager.DeclareDead(replicaId);
+                }
             }
         }
     }

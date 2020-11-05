@@ -83,5 +83,10 @@ namespace Client.Domain
                 }
             }
         }
+
+        public override string ToString()
+        {
+            return base.ToString() + "=========================\n\n";
+        }
     }
 }

@@ -15,6 +15,8 @@ namespace Client.Controllers
             {
                 Server server = connectionManager.ChooseServerForRead(partitionId, serverId, out Dictionary<string, Server> aux);
                 nonUsedReplicas = aux;
+                Console.WriteLine("Non used");
+                Console.WriteLine(aux.Count);
                 Console.WriteLine($"Trying: {server.Id}");
                 return await SendReadRequest(partitionId, objectId, server);
             }
@@ -22,7 +24,9 @@ namespace Client.Controllers
             {
                 Console.WriteLine($"Server crashed when trying to read object {objectId}. Trying new replica...");
                 connectionManager.DeclareDead(serverId);
+                Console.WriteLine(nonUsedReplicas.Count);
                 nonUsedReplicas.Remove(serverId);
+                Console.WriteLine(nonUsedReplicas.Count);
                 foreach (KeyValuePair<string, Server> replica in nonUsedReplicas)
                 {
                     try

@@ -18,14 +18,16 @@ namespace Client.Domain
         }
 
 
-        public Server ChooseServerForRead(string partitionId, string serverId, out Dictionary<string, Server> usedReplicas)
+        public Server ChooseServerForRead(string partitionId, string serverId, out Dictionary<string, Server> nonUsedReplicas)
         {
             _ = GetPartition(partitionId); // throws exception if partition doesn't exist
 
-            usedReplicas = new Dictionary<string, Server>();
+            nonUsedReplicas = new Dictionary<string, Server>();
 
             if (attachedServer != null && PartitionContainsAlive(partitionId, attachedServer.Id))
             {
+                nonUsedReplicas = GetPartitionAliveReplicas(partitionId).ToDictionary(r => r.Id, r => r);
+                Console.WriteLine("Tá Attached e na partição");
                 return attachedServer;
             }
 
@@ -36,15 +38,18 @@ namespace Client.Domain
 
                 if (defaultServer != null && PartitionContainsAlive(partitionId, defaultServer.Id))
                 {
+                    Console.WriteLine("Tá na partição e server_id != -1");
+                    nonUsedReplicas = GetPartitionAliveReplicas(partitionId).ToDictionary(r => r.Id, r => r);
                     attachedServer = defaultServer;
                     return attachedServer;
                 }
             }
 
             IImmutableSet<Server> aliveReplicas = GetPartitionAliveReplicas(partitionId);
+            Console.WriteLine("Alive replicas:" + aliveReplicas.Count);
             if (aliveReplicas.Count > 0)
             {
-                usedReplicas = aliveReplicas.ToDictionary(r => r.Id, r => r);
+                nonUsedReplicas = aliveReplicas.ToDictionary(r => r.Id, r => r);
                 Random rnd = new Random();
                 attachedServer = aliveReplicas.ElementAt(rnd.Next(0, aliveReplicas.Count));
                 return attachedServer;

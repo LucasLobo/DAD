@@ -55,7 +55,7 @@ namespace GStoreServer.Services
 
         private Empty ExecuteHeartbeat(HeartBeatRequest request)
         {
-            Console.WriteLine($"HeartBeat Replica request -> ServerId: {request.ServerId}");
+            //Console.WriteLine($"HeartBeat Replica request -> ServerId: {request.ServerId}");
             return new Empty();
         }
 

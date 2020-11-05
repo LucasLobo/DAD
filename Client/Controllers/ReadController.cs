@@ -18,7 +18,7 @@ namespace Client.Controllers
                 Console.WriteLine($"Trying: {server.Id}");
                 return await SendReadRequest(partitionId, objectId, server);
             }
-            catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+            catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal || e.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded)
             {
                 Console.WriteLine($"Server crashed when trying to read object {objectId}. Trying new replica...");
                 connectionManager.DeclareDead(serverId);
@@ -30,7 +30,7 @@ namespace Client.Controllers
                         Console.WriteLine($"Trying: {replica.Key}");
                         return await SendReadRequest(partitionId, objectId, replica.Value);
                     }
-                    catch (Grpc.Core.RpcException exception) when (exception.StatusCode == Grpc.Core.StatusCode.Internal)
+                    catch (Grpc.Core.RpcException exception) when (exception.StatusCode == Grpc.Core.StatusCode.Internal || exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded)
                     {
                         Console.WriteLine($"Server crashed when trying to read object {objectId}. Trying new replica...");
                         connectionManager.DeclareDead(replica.Key);

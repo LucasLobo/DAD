@@ -8,6 +8,7 @@ using Grpc.Core;
 using System.Diagnostics;
 using Grpc.Net.Client;
 using System.Linq;
+using Client.Controllers;
 
 namespace Client
 {

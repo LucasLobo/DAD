@@ -1,6 +1,8 @@
 using Utils;
 using System.Collections.Generic;
 using System;
+using Client.Controllers;
+using System.Threading.Tasks;
 
 namespace Client.Domain
 {
@@ -46,6 +48,40 @@ namespace Client.Domain
             Partition partition = GetPartition(partitionId);
             attachedServer = GetAliveServer(partition.MasterId);
             return attachedServer;
+        }
+
+        public new async Task DeclareDead(string deadServerId)
+        {
+            IDictionary<string, Task<string>> PartitionGetMasterTasks = new Dictionary<string, Task<string>>();
+
+            lock (this)
+            {
+                base.DeclareDead(deadServerId);
+
+                foreach (Partition partition in Partitions.Values)
+                {
+                    if (partition.MasterId == deadServerId)
+                    {
+                        PartitionGetMasterTasks.Add(partition.Id, GetMasterController.Execute(this, partition.Id));
+                    }
+                }
+            }
+
+            IDictionary<string, string> partitionNewMasters = new Dictionary<string, string>();
+            foreach (KeyValuePair<string, Task<string>> partitionGetMasterTask in PartitionGetMasterTasks)
+            {
+                string partitionId = partitionGetMasterTask.Key;
+                Task<string> getMasterTask = partitionGetMasterTask.Value;
+                partitionNewMasters.Add(partitionId, await getMasterTask);
+            }
+
+            lock (this)
+            {
+                foreach (KeyValuePair<string, string> partitionNewMaster in partitionNewMasters)
+                {
+                    ElectNewMaster(partitionNewMaster.Key, partitionNewMaster.Value);
+                }
+            }
         }
     }
 }

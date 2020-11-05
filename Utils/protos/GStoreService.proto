@@ -6,6 +6,7 @@ service GStoreService {
     rpc Write (GStoreWriteRequest) returns (google.protobuf.Empty);
     rpc ListServer (google.protobuf.Empty) returns (GStoreListServerReply);
     rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
+    rpc GetMaster (GStoreGetMasterRequest) returns (GStoreGetMasterResponse);
 }
 
 message DataObjectIdentifier {
@@ -41,4 +42,12 @@ message GStoreListServerReply {
 
 message GStoreListGlobalReply {
     repeated DataObjectIdentifier object_identifiers = 1;
+}
+
+message GStoreGetMasterRequest {
+    string partition_id = 1;
+}
+
+message GStoreGetMasterResponse {
+    string master_id = 1;
 }

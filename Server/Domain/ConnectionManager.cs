@@ -16,7 +16,7 @@ namespace GStoreServer.Domain
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
 
-        private static readonly int HEARTBEAT_INTERVAL = 1000;
+        private static readonly int HEARTBEAT_INTERVAL = 5000;
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -127,6 +127,8 @@ namespace GStoreServer.Domain
             {
                 toString += " " + partition;
             }
+
+            toString += "\n=========================\n\n";
 
             return toString;
         }

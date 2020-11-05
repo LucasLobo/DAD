@@ -134,7 +134,7 @@ namespace Utils
 
         public override string ToString()
         {
-            string lines = "=== ConnectionManager ===\nServers:\n";
+            string lines = "\n=== ConnectionManager ===\nServers:\n";
 
             foreach (KeyValuePair<string, TServer> serverEntry in Servers)
             {

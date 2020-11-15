@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Utils;
 using System.Timers;
+using System.Collections.Immutable;
 
 namespace GStoreServer.Domain
 {
@@ -17,10 +18,18 @@ namespace GStoreServer.Domain
         // Partitions in which this server is a Replica
         private readonly ISet<string> replicaPartitions;
 
-        private IDictionary<string, Timer> replicasWatchdogs = new Dictionary<string, Timer>();
+        private readonly IDictionary<string, Timer> replicasWatchdogs = new Dictionary<string, Timer>();
 
+        // Delay between each heartbeat round
         private static readonly int HEARTBEAT_INTERVAL = 1000;
-        private static readonly int HEARTBEAT_TIMEOUT = 3000;
+
+        // Time for a heartbeat to timeout. After this time the request will be canceled.
+        private static readonly int HEARTBEAT_TIMEOUT = 2000;
+
+        // Time for watchdog to timeout. After this replica replica will be considered dead. This value should be higher than HEARTBEAT_INTERVAL
+        private static readonly int WATCHDOG_TIMEOUT = HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT;
+
+        // Delay between initialization and when heartbeats start being sent
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -37,28 +46,27 @@ namespace GStoreServer.Domain
             foreach (Partition partition in partitions.Values)
             {
                 if (partition.MasterId == selfServerId) masterPartitions.Add(partition.Id);
-                else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
+                else if (partition.ContainsReplica(selfServerId)) replicaPartitions.Add(partition.Id);
             }
 
-            //InitWatchdogs();
-            StartSendingHeartbeats();
+            InitWatchdogs();
+            InitHeartbeats();
         }
 
-        private async void InitWatchdogs()
-        {
-            await Task.Delay(GRACE_PERIOD);
 
+        private ISet<Server> GetReplicasOfPartitionsWhereSelfMaster()
+        {
+            ISet<Server> replicas = new HashSet<Server>();
             foreach (string partitionId in masterPartitions)
             {
-                Partition serverPartition = GetPartition(partitionId);
-                foreach (string serverId in serverPartition.ReplicaSet)
-                {
-                    replicasWatchdogs.Add(serverId, SetTimer(HEARTBEAT_INTERVAL + 1000, serverId));
-                }
+                replicas.UnionWith(GetPartitionAliveReplicas(partitionId));
             }
+            return replicas;
         }
 
-        public ISet<Server> GetMastersOfPartitionsWhereSelfReplica()
+
+        // Returns the set of master servers for the partitions in which the current server corresponding to this instance of the ConnectionManager is a replica
+        private ISet<Server> GetMastersOfPartitionsWhereSelfReplica()
         {
             ISet<Server> masters = new HashSet<Server>();
             foreach (string partitionId in replicaPartitions)
@@ -109,7 +117,7 @@ namespace GStoreServer.Domain
         }
 
 
-        // Caller ALWAYS should ensure mutual exclusion within this function
+        // Caller should ALWAYS ensure mutual exclusion within this function
         private new void ElectNewMaster(string partitionId, string newMasterId)
         {
             // vvv Redundant vvv
@@ -123,12 +131,24 @@ namespace GStoreServer.Domain
 
             base.ElectNewMaster(partitionId, newMasterId);
 
+
             if (newMasterId == selfServerId)
             {
                 masterPartitions.Add(partitionId);
                 replicaPartitions.Remove(partitionId);
+
+                IImmutableSet<Server> replicas = GetPartitionAliveReplicas(partitionId);
+                foreach (Server replica in replicas)
+                {
+                    string replicaId = replica.Id;
+                    // In case it is a new replica for this server
+                    if (!replicasWatchdogs.ContainsKey(replicaId))
+                    {
+                        AddReplicaToWatchdog(replicaId);
+                    }
+                }
             }
-            
+
         }
 
         public override string ToString()
@@ -153,8 +173,9 @@ namespace GStoreServer.Domain
             return toString;
         }
 
-        public async void StartSendingHeartbeats()
+        public async void InitHeartbeats()
         {
+
             await Task.Delay(GRACE_PERIOD);
             
             while (true)
@@ -164,34 +185,28 @@ namespace GStoreServer.Domain
             }
         }
 
+        // Heart beats are sent from replica to masters.
         private async Task SendHeartbeats()
         {
             IDictionary<string, Task> heartbeatTasks = new Dictionary<string, Task>();
+
             foreach (Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
             {
                 heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer));
             }
 
-            foreach (KeyValuePair<string, Task> heartbeatResponse in heartbeatTasks)
+            foreach (KeyValuePair<string, Task> heartbeatTask in heartbeatTasks)
             {
+                string masterId = heartbeatTask.Key;
+                Task task = heartbeatTask.Value;
                 try
                 {
-                   await heartbeatResponse.Value;
+                    await task;
                 }
-                catch (Grpc.Core.RpcException exception)
+                catch (Grpc.Core.RpcException exception) when (exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
                 {
-                    //penso que com o freeze vai lançar a deadline exceeded e quando crasha lança a internal
-                    if(exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
-                    {
-                        Console.WriteLine($"No response from server.ServerId: {heartbeatResponse.Key}");
-                        DeclareDead(heartbeatResponse.Key);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Grpc Exception Occured");
-                        Console.WriteLine(exception);
-                        throw exception;
-                    }
+                    Console.WriteLine($"No response from master '{masterId}' heartbeat in '{HEARTBEAT_TIMEOUT}' milliseconds.");
+                    DeclareDead(masterId);
                 }
             }
         }
@@ -204,33 +219,65 @@ namespace GStoreServer.Domain
             },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_TIMEOUT));
         }
 
-        public IDictionary<string, Timer> GetReplicasWatchDogs()
+        private async void InitWatchdogs()
         {
-            return replicasWatchdogs;
+            await Task.Delay(GRACE_PERIOD);
+
+            foreach (string partitionId in masterPartitions)
+            {
+                foreach(Server replica in GetReplicasOfPartitionsWhereSelfMaster())
+                {
+                    string replicaId = replica.Id;
+                    AddReplicaToWatchdog(replicaId);
+                }
+            }
         }
 
-        private Timer SetTimer(int timerInterval, string serverId)
+        private void AddReplicaToWatchdog(string replicaId)
+        {
+            Console.WriteLine($"Added replica '{replicaId}' to watchdog set");
+            replicasWatchdogs.Add(replicaId, SetTimer(WATCHDOG_TIMEOUT, replicaId));
+        }
+
+        private Timer SetTimer(int timerInterval, string replicaId)
         {
             // Create a timer with a two second interval.
             Timer timer = new Timer(timerInterval);
             // Hook up the Elapsed event for the timer. 
-            timer.Elapsed += delegate { RemoveReplica(serverId); };
+            timer.Elapsed += delegate { RemoveReplica(replicaId); };
             timer.Enabled = true;
             return timer;
         }
 
-        private void RemoveReplica(string serverId)
+        private void RemoveReplica(string replicaId)
         {
-            Console.WriteLine("Replica is dead -> " + serverId);
-            //Stops and releases resources used by the timer
-            replicasWatchdogs[serverId].Stop();
-            replicasWatchdogs[serverId].Dispose();
-            //Removes timer from watch dog list
-            replicasWatchdogs.Remove(serverId);
-            DeclareDead(serverId);
+            lock(this)
+            {
+                if (!replicasWatchdogs.TryGetValue(replicaId, out Timer timer))
+                {
+                    // error
+                    return;
+                }
+                Console.WriteLine($"Watchdog timeout from replica '{replicaId}': {WATCHDOG_TIMEOUT} milliseconds ellapsed without heartbeat.");
+
+                //Stops and releases resources used by the timer
+                timer.Stop();
+                timer.Dispose();
+
+                //Removes timer from watch dog list
+                replicasWatchdogs.Remove(replicaId);
+                DeclareDead(replicaId);
+            }
         }
 
-        public void ResetTimer(Timer timer)
+        public void ResetTimer(string replicaId)
+        {
+            if (!replicasWatchdogs.TryGetValue(replicaId, out Timer timer)) {
+                throw new Exception("Unknown replica");
+            }
+            ResetTimer(timer);
+        }
+        private void ResetTimer(Timer timer)
         {
             timer.Stop();
             timer.Start();

@@ -53,7 +53,7 @@ namespace Client
                 string[] protocolAndHostnameAndPort = url.Split("://");
                 string[] hostnameAndPort = protocolAndHostnameAndPort[1].Split(":");
                 int port = int.Parse(hostnameAndPort[1]);
-                string filename = args[2];
+                string filename = args[2] + ".txt";
                 string networkConfiguration = args[3];
                 string[] lines;
                 lines = System.IO.File.ReadAllLines(filename);

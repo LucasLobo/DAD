@@ -58,7 +58,7 @@ namespace PuppetMaster
 
         private async void btnRunScript_Click(object sender, EventArgs e)
         {
-            string filename = txtBoxScriptLocation.Text;
+            string filename = txtBoxScriptLocation.Text + ".txt";
             if (string.IsNullOrEmpty(filename)) return;
 
             string[] lines;
@@ -71,6 +71,7 @@ namespace PuppetMaster
 
                 foreach (string line in lines)
                 {
+                    if (line[0].Equals('#')) continue;
                     string lineLower = line.ToLower();
                     bool isConcurrent = CommandDispatcher.IsConcurrent(lineLower);
 

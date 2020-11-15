@@ -19,8 +19,8 @@ namespace GStoreServer.Domain
 
         private IDictionary<string, Timer> replicasWatchdogs = new Dictionary<string, Timer>();
 
-        private static readonly int HEARTBEAT_INTERVAL = 2000;
-
+        private static readonly int HEARTBEAT_INTERVAL = 1000;
+        private static readonly int HEARTBEAT_TIMEOUT = 3000;
         private static readonly int GRACE_PERIOD = 2000;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
@@ -40,7 +40,7 @@ namespace GStoreServer.Domain
                 else if (partition.ReplicaSet.Contains(selfServerId)) replicaPartitions.Add(partition.Id);
             }
 
-            InitWatchdogs();
+            //InitWatchdogs();
             StartSendingHeartbeats();
         }
 
@@ -135,6 +135,7 @@ namespace GStoreServer.Domain
         {
             string toString = base.ToString();
 
+            toString += "\nServerId: " + selfServerId;
             toString += "\nPartitions where (self) master:";
             foreach(string partition in masterPartitions)
             {
@@ -200,7 +201,7 @@ namespace GStoreServer.Domain
             await server.Stub.HeartBeatAsync(new HeartBeatRequest
             {
                 ServerId = selfServerId
-            },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_INTERVAL));
+            },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_TIMEOUT));
         }
 
         public IDictionary<string, Timer> GetReplicasWatchDogs()

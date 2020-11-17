@@ -5,6 +5,7 @@ using System.Linq;
 using Utils;
 using System.Timers;
 using System.Collections.Immutable;
+using GStoreServer.Controllers;
 
 namespace GStoreServer.Domain
 {
@@ -192,7 +193,7 @@ namespace GStoreServer.Domain
 
             foreach (Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
             {
-                heartbeatTasks.Add(masterServer.Id, SendHeartbeat(masterServer));
+                heartbeatTasks.Add(masterServer.Id, HeartbeatController.ExecuteAsync(masterServer.Stub, selfServerId, HEARTBEAT_TIMEOUT));
             }
 
             foreach (KeyValuePair<string, Task> heartbeatTask in heartbeatTasks)
@@ -209,14 +210,6 @@ namespace GStoreServer.Domain
                     DeclareDead(masterId);
                 }
             }
-        }
-
-        private async Task SendHeartbeat(Server server)
-        {
-            await server.Stub.HeartBeatAsync(new HeartBeatRequest
-            {
-                ServerId = selfServerId
-            },  deadline: DateTime.UtcNow.AddMilliseconds(HEARTBEAT_TIMEOUT));
         }
 
         private async void InitWatchdogs()

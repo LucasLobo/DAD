@@ -11,7 +11,7 @@ namespace Utils
 
         public string MasterId { get; set; }
 
-        public SortedSet<string> ReplicaSet { get; }
+        private SortedSet<string> ReplicaSet { get; }
 
         public Partition(string id, string masterId, ISet<string> replicaSet)
         {
@@ -51,11 +51,17 @@ namespace Utils
             return ReplicaSet.ToImmutableList();
         }
 
-        // Dangerous - returns true even when a server is dead
+
+        public bool ContainsReplica(string serverId)
+        {
+            if (string.IsNullOrEmpty(serverId)) return false;
+            return ReplicaSet.Contains(serverId);
+        }
+
         protected internal bool Contains(string serverId)
         {
             if (string.IsNullOrEmpty(serverId)) return false;
-            return (MasterId == serverId) || ReplicaSet.Contains(serverId);
+            return (MasterId == serverId) || ContainsReplica(serverId);
         }
 
         public void ElectNewMaster(string serverId)

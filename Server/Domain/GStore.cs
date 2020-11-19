@@ -190,5 +190,10 @@ namespace GStoreServer
                 Console.WriteLine(item.Value);
             }
         }
+
+        public ConnectionManager GetConnectionManager()
+        {
+            return connectionManager;
+        }
     }
 }

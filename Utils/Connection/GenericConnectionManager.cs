@@ -26,15 +26,6 @@ namespace Utils
             return partition.Contains(serverId) && server.Alive;
         }
 
-        //public ISet<TServer> GetPartitionAliveServers(string partitionId)
-        //{
-        //    ISet<TServer> serverSet = GetPartitionAliveReplicas(partitionId);
-        //    Partition partition = GetPartition(partitionId);
-        //    TServer master = GetServer(partition.MasterId);
-        //    if (master.Alive) serverSet.Add(master);
-        //    return serverSet;
-        //}
-
         // Get replicas that are alive for a partition
         public IImmutableSet<TServer> GetPartitionAliveReplicas(string partitionId)
         {

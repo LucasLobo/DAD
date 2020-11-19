@@ -55,7 +55,8 @@ namespace GStoreServer.Services
 
         private Empty ExecuteHeartbeat(HeartBeatRequest request)
         {
-            //Console.WriteLine($"HeartBeat Replica request -> ServerId: {request.ServerId}");
+            string replicaId = request.ServerId;
+            gStore.GetConnectionManager().ResetTimer(replicaId);
             return new Empty();
         }
 

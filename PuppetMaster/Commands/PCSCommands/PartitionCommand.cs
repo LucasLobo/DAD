@@ -16,7 +16,7 @@ namespace PuppetMaster.Commands
         }
 
         public static int EXPECTED_ARGUMENTS = 2;
-        public override async Task ExecuteAsync(List<string> arguments)
+        public override Task ExecuteAsync(List<string> arguments)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace PuppetMaster.Commands
             {
                 throw new ApplySystemConfigurationException("Create partition command", e);
             }
-            
+            return Task.CompletedTask;
         }
     }
 }

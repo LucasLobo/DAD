@@ -48,26 +48,6 @@ namespace GStoreServer.Services
             return new Empty();
         }
 
-        public override Task<GStoreListGlobalReply> ListGlobal(Empty request, ServerCallContext context)
-        {
-            return ExecuteListGlobal();
-        }
-
-        private async Task<GStoreListGlobalReply> ExecuteListGlobal()
-        {
-            Console.WriteLine("ListGlobal request");
-
-            ICollection<GStoreObjectIdentifier> idSet = await gStore.GetIdSet();
-
-            GStoreListGlobalReply reply = new GStoreListGlobalReply();
-
-            foreach(GStoreObjectIdentifier objectIdentifier in idSet)
-            {
-                reply.ObjectIdentifiers.Add(DataObjectIdentifierBuilder.FromObjectIdentifier(objectIdentifier));
-            }
-            return reply;
-        }
-
         public override Task<GStoreListServerReply> ListServer(Empty request, ServerCallContext context)
         {
             return ExecuteListServer();

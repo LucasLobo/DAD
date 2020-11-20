@@ -18,7 +18,7 @@ namespace PuppetMaster.Commands
         }
 
         public static int EXPECTED_ARGUMENTS = 4;
-        public override async Task ExecuteAsync(List<string> arguments)
+        public override Task ExecuteAsync(List<string> arguments)
         {
             if (arguments.Count != EXPECTED_ARGUMENTS)
             {
@@ -35,7 +35,7 @@ namespace PuppetMaster.Commands
             {
                 throw new ApplySystemConfigurationException("Create server command", e);
             }
-            
+            return Task.CompletedTask;
         }
     }
 }

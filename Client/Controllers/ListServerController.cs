@@ -27,11 +27,9 @@ namespace Client.Controllers
             }
             catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
             {
-                connectionManager.DeclareDead(serverId);
+                _ = connectionManager.DeclareDead(serverId);
                 return null;
             }
-
-
         }
 
         private static GStoreObjectReplica CreateObjectReplica(DataObjectReplica dataObjectReplica)

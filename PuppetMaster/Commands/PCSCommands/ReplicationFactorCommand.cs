@@ -14,9 +14,10 @@ namespace PuppetMaster.Commands
             txtBoxOutput = output;
         }
 
-        public override async Task ExecuteAsync(List<string> arguments)
+        public override Task ExecuteAsync(List<string> arguments)
         {
             txtBoxOutput.AppendText(Environment.NewLine + "Unused command.");
+            return Task.CompletedTask;
         }
     }
 }

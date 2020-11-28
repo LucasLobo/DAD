@@ -5,7 +5,6 @@ service GStoreService {
     rpc Read (GStoreReadRequest) returns (GStoreReadReply);
     rpc Write (GStoreWriteRequest) returns (google.protobuf.Empty);
     rpc ListServer (google.protobuf.Empty) returns (GStoreListServerReply);
-    rpc ListGlobal (google.protobuf.Empty) returns (GStoreListGlobalReply);
     rpc GetMaster (GStoreGetMasterRequest) returns (GStoreGetMasterResponse);
 }
 
@@ -38,10 +37,6 @@ message GStoreWriteRequest {
 
 message GStoreListServerReply {
     repeated DataObjectReplica object_replicas = 1;
-}
-
-message GStoreListGlobalReply {
-    repeated DataObjectIdentifier object_identifiers = 1;
 }
 
 message GStoreGetMasterRequest {

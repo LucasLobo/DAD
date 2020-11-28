@@ -61,7 +61,7 @@ namespace Utils
                         throw new PreprocessingException("end-repeat expects no arguments.");
                     }
 
-                    for (int i = 0; i < numberOfIterations; i++)
+                    for (int i = 1; i <= numberOfIterations; i++)
                     {
                         repeatCommands.ForEach(delegate (string repeatCommand)
                         {

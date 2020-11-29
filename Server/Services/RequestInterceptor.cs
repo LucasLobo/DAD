@@ -27,9 +27,7 @@ namespace GStoreServer.Services
         {
             freezeLock.Wait();
             TResponse response = await base.UnaryServerHandler(request, context, continuation);
-            freezeLock.Wait();
             await Task.Delay(r.Next(minDelay, maxDelay));
-            freezeLock.Wait();
             return response;
         }
     }

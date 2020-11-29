@@ -103,6 +103,21 @@ namespace Utils
             return aliveServers.ToImmutableHashSet();
         }
 
+        public IImmutableSet<TServer> GetAliveServers(string partitionId)
+        {
+            Partition partition = GetPartition(partitionId);
+            ImmutableList<string> servers = partition.GetAllServers();
+
+            ISet<TServer> aliveServers = new HashSet<TServer>();
+            foreach (string serverId in servers)
+            {
+                TServer server = GetServer(serverId);
+                if (server.Alive) aliveServers.Add(server);
+            }
+
+            return aliveServers.ToImmutableHashSet();
+        }
+
         public void DeclareDead(string serverId)
         {
             TServer server = GetServer(serverId);

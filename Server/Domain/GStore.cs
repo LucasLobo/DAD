@@ -139,6 +139,12 @@ namespace GStoreServer
             return connectionManager.GetPartitionMasterId(partitionId);
         }
 
+        public bool IsLocked(GStoreObjectIdentifier gStoreObjectIdentifier)
+        {
+            ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
+            return objectLock.IsWriteLocked();
+        }
+
         private ReaderWriterLockEnhancedSlim GetObjectLock(GStoreObjectIdentifier gStoreObjectIdentifier)
         {
             return ObjectLocks.GetOrAdd(gStoreObjectIdentifier,
@@ -162,46 +168,50 @@ namespace GStoreServer
                 });
         }
 
-        public void ShowDataStore()
+        public async Task CleanLocks(string masterId)
         {
-            foreach (var item in DataStore)
+            MastersLocks.TryGetValue(masterId, out ConcurrentDictionary<int, GStoreObjectIdentifier> masterLocks);
+
+            if (masterLocks == null) return;
+
+            IDictionary<int, Task<string>> tasks = new Dictionary<int, Task<string>>();
+            foreach (KeyValuePair<int, GStoreObjectIdentifier> locks in masterLocks)
             {
-                Console.WriteLine(item.Value);
+                int lockId = locks.Key;
+                GStoreObjectIdentifier gStoreObjectIdentifier = locks.Value;
+
+                ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
+                if (!objectLock.IsWriteLockValid(lockId)) {
+                    throw new Exception("Invalid lock");
+                }
+
+                Task<string> task = ReadRecoveryController.ExecuteAsync(connectionManager, gStoreObjectIdentifier);
+                tasks.Add(lockId, task);
             }
 
+            foreach (KeyValuePair<int, Task<string>> taskPair in tasks)
+            {
+                Task<string> task = taskPair.Value;
+                int lockId = taskPair.Key;
+
+                masterLocks.TryGetValue(lockId, out GStoreObjectIdentifier gStoreObjectIdentifier);
+                ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
+
+                string value = await task;
+                if (value != null)
+                {
+                    _ = AddOrUpdate(gStoreObjectIdentifier, value);
+                }
+
+                Console.WriteLine("Cleaned one lock");
+                objectLock.ExitWriteLock(lockId);
+            }
 
         }
 
         public ConnectionManager GetConnectionManager()
         {
             return connectionManager;
-        }
-
-        public void CleanLocks(string masterId)
-        {
-            MastersLocks.TryGetValue(masterId, out ConcurrentDictionary<int, GStoreObjectIdentifier> masterLocks);
-
-            foreach (KeyValuePair<int, GStoreObjectIdentifier> locks in masterLocks)
-            {
-                int lockId = locks.Key;
-                GStoreObjectIdentifier gStoreObjectIdentifier = locks.Value;
-                // fazer unlock e request novo a pedir novo valor
-            }
-
-
-
-        }
-
-        public void ReadMasterLocks()
-        {
-            Console.WriteLine("master locks");
-            foreach (KeyValuePair<string, ConcurrentDictionary<int, GStoreObjectIdentifier>> masterLocks in MastersLocks)
-            {
-                foreach (KeyValuePair<int, GStoreObjectIdentifier> locks in masterLocks.Value)
-                {
-                    Console.WriteLine(locks.Key);
-                }
-            }
         }
     }
 }

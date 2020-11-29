@@ -36,11 +36,12 @@ namespace GStoreServer
                 int port = int.Parse(hotnameAndPort[1]);
                 int minDelay = int.Parse(args[2]);
                 int maxDelay = int.Parse(args[3]);
-                
+
                 ConnectionManager connectionManager = CreateServerConnectionManager(args[4]);
+                GStore gStore = new GStore(connectionManager);
+                connectionManager.AddGStore(gStore);
                 Console.WriteLine(connectionManager);
 
-                GStore gStore = new GStore(connectionManager);
                 ManualResetEventSlim freezeLock = new ManualResetEventSlim(true);
                 RequestInterceptor requestInterceptor = new RequestInterceptor(freezeLock, minDelay, maxDelay);
 

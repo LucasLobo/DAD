@@ -34,6 +34,8 @@ namespace GStoreServer.Domain
         private static readonly int GRACE_PERIOD = 2000;
 
         private bool useWatchDog = true;
+        // Used to clean locks on crashes
+        private GStore gStore;
 
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
         {
@@ -41,7 +43,6 @@ namespace GStoreServer.Domain
             {
                 throw new ArgumentException($"'{selfServerId}' cannot be null or whitespace", nameof(selfServerId));
             }
-
             this.selfServerId = selfServerId;
 
             masterPartitions = new HashSet<string>();
@@ -54,6 +55,11 @@ namespace GStoreServer.Domain
 
             InitWatchdogs();
             InitHeartbeats();
+        }
+
+        public void AddGStore(GStore gStore)
+        {
+            this.gStore = gStore;
         }
 
 
@@ -117,6 +123,7 @@ namespace GStoreServer.Domain
                     }
                 }
             }
+            if (gStore != null) _ = gStore.CleanLocks(deadServerId);
         }
 
 

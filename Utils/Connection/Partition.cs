@@ -51,6 +51,15 @@ namespace Utils
             return ReplicaSet.ToImmutableList();
         }
 
+        public ImmutableList<string> GetAllServers()
+        {
+            ISet<string> serverSet = new HashSet<string>(ReplicaSet)
+            {
+                MasterId
+            };
+            return serverSet.ToImmutableList();
+        }
+
 
         public bool ContainsReplica(string serverId)
         {

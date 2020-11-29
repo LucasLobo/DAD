@@ -25,7 +25,7 @@ namespace GStoreServer.Domain
         private static readonly int HEARTBEAT_INTERVAL = 1000;
 
         // Time for a heartbeat to timeout. After this time the request will be canceled.
-        private static readonly int HEARTBEAT_TIMEOUT = 2000;
+        private static readonly int HEARTBEAT_TIMEOUT = 10000;
 
         // Time for watchdog to timeout. After this replica replica will be considered dead. This value should be higher than HEARTBEAT_INTERVAL
         private static readonly int WATCHDOG_TIMEOUT = HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT;
@@ -33,13 +33,16 @@ namespace GStoreServer.Domain
         // Delay between initialization and when heartbeats start being sent
         private static readonly int GRACE_PERIOD = 2000;
 
+        private bool useWatchDog = true;
+        // Used to clean locks on crashes
+        private GStore gStore;
+
         public ConnectionManager(IDictionary<string, Server> servers, IDictionary<string, Partition> partitions, string selfServerId) : base(servers, partitions)
         {
             if (string.IsNullOrWhiteSpace(selfServerId))
             {
                 throw new ArgumentException($"'{selfServerId}' cannot be null or whitespace", nameof(selfServerId));
             }
-
             this.selfServerId = selfServerId;
 
             masterPartitions = new HashSet<string>();
@@ -52,6 +55,11 @@ namespace GStoreServer.Domain
 
             InitWatchdogs();
             InitHeartbeats();
+        }
+
+        public void AddGStore(GStore gStore)
+        {
+            this.gStore = gStore;
         }
 
 
@@ -115,6 +123,7 @@ namespace GStoreServer.Domain
                     }
                 }
             }
+            if (gStore != null) _ = gStore.CleanLocks(deadServerId);
         }
 
 
@@ -181,7 +190,7 @@ namespace GStoreServer.Domain
             
             while (true)
             {
-                await SendHeartbeats();
+                _ = SendHeartbeats();
                 await Task.Delay(HEARTBEAT_INTERVAL);
             }
         }
@@ -206,7 +215,7 @@ namespace GStoreServer.Domain
                 }
                 catch (Grpc.Core.RpcException exception) when (exception.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded || exception.StatusCode == Grpc.Core.StatusCode.Internal)
                 {
-                    Console.WriteLine($"No response from master '{masterId}' heartbeat in '{HEARTBEAT_TIMEOUT}' milliseconds.");
+                    Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} No response from master '{masterId}' heartbeat in '{HEARTBEAT_TIMEOUT}' milliseconds.");
                     DeclareDead(masterId);
                 }
             }
@@ -228,7 +237,8 @@ namespace GStoreServer.Domain
 
         private void AddReplicaToWatchdog(string replicaId)
         {
-            Console.WriteLine($"Added replica '{replicaId}' to watchdog set");
+            if (!useWatchDog) return;
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} Added replica '{replicaId}' to watchdog set");
             replicasWatchdogs.Add(replicaId, SetTimer(WATCHDOG_TIMEOUT, replicaId));
         }
 
@@ -248,10 +258,9 @@ namespace GStoreServer.Domain
             {
                 if (!replicasWatchdogs.TryGetValue(replicaId, out Timer timer))
                 {
-                    // error
                     return;
                 }
-                Console.WriteLine($"Watchdog timeout from replica '{replicaId}': {WATCHDOG_TIMEOUT} milliseconds ellapsed without heartbeat.");
+                Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} Watchdog timeout from replica '{replicaId}': {WATCHDOG_TIMEOUT} milliseconds ellapsed without heartbeat.");
 
                 //Stops and releases resources used by the timer
                 timer.Stop();
@@ -265,8 +274,11 @@ namespace GStoreServer.Domain
 
         public void ResetTimer(string replicaId)
         {
+            if (!useWatchDog) return;
+
             if (!replicasWatchdogs.TryGetValue(replicaId, out Timer timer)) {
-                throw new Exception("Unknown replica");
+                Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} ResetTimer of nonexisted server - Self: {selfServerId} | Reset: {replicaId} | Replicas: ");
+                return;
             }
             ResetTimer(timer);
         }

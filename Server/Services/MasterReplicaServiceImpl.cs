@@ -55,8 +55,16 @@ namespace GStoreServer.Services
 
         private Empty ExecuteHeartbeat(HeartBeatRequest request)
         {
-            string replicaId = request.ServerId;
-            gStore.GetConnectionManager().ResetTimer(replicaId);
+            try
+            {
+                string replicaId = request.ServerId;
+                gStore.GetConnectionManager().ResetTimer(replicaId);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             return new Empty();
         }
 
@@ -69,6 +77,36 @@ namespace GStoreServer.Services
         {
             Console.WriteLine($"Crash Replica request");
             return new Empty();
+        }
+
+        public override Task<ReadRecoveryReply> ReadRecovery(ReadRecoveryRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(ExecuteReadRecovery(request));
+        }
+
+        private ReadRecoveryReply ExecuteReadRecovery(ReadRecoveryRequest request)
+        {
+            GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.ObjectIdentifier.PartitionId, request.ObjectIdentifier.ObjectId);
+
+            bool valid = !gStore.IsLocked(gStoreObjectIdentifier);
+
+            ObjectDto objectDto = null;
+
+            if (valid)
+            {
+                objectDto = new ObjectDto
+                {
+                    ObjectIdentifier = request.ObjectIdentifier,
+                    Value = gStore.Read(gStoreObjectIdentifier)
+                };
+            }
+
+            return new ReadRecoveryReply
+            {
+                Valid = valid,
+                Object = objectDto
+            };
+
         }
     }
 }

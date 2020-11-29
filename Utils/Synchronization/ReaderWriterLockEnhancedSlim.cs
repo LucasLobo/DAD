@@ -128,11 +128,19 @@ namespace Utils
             }
         }
 
-        public Boolean IsWriteLockValid(int id)
+        public bool IsWriteLockValid(int id)
         {
             lock (LockObject)
             {
                 return writing && writeLock == id;
+            }
+        }
+
+        public bool IsWriteLocked()
+        {
+            lock (LockObject)
+            {
+                return writing;
             }
         }
     }

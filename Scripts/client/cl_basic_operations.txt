@@ -7,9 +7,4 @@ write part-5 o-1 "XYZ"
 read part-1 o-1 s-2
 read part-2 o-1 -1
 read part-5 o-1 -1
-listServer s-1
-listServer s-2
-listServer s-3
-listServer s-4
-listServer s-5
 listGlobal

@@ -10,6 +10,7 @@ namespace GStoreServer
 {
     class GStore
     {
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<int, GStoreObjectIdentifier>> MastersLocks;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject> DataStore;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockEnhancedSlim> ObjectLocks;
         private readonly ConnectionManager connectionManager;
@@ -17,6 +18,7 @@ namespace GStoreServer
         public GStore(ConnectionManager connectionManager)
         {
             this.connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
+            MastersLocks = new ConcurrentDictionary<string, ConcurrentDictionary<int, GStoreObjectIdentifier>>();
             DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>();
             ObjectLocks = new ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockEnhancedSlim>();
         }
@@ -107,7 +109,11 @@ namespace GStoreServer
         public int Lock(GStoreObjectIdentifier gStoreObjectIdentifier)
         {
             ReaderWriterLockEnhancedSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
-            return objectLock.EnterWriteLock();
+            string masterId = connectionManager.GetPartitionMasterId(gStoreObjectIdentifier.PartitionId);
+            int lockId = objectLock.EnterWriteLock();
+            ConcurrentDictionary<int, GStoreObjectIdentifier> locks = MastersLocks.GetOrAdd(masterId, (masterId) => new ConcurrentDictionary<int, GStoreObjectIdentifier>());
+            locks.TryAdd(lockId, gStoreObjectIdentifier);
+            return lockId;
         }
 
         public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int lockId)
@@ -122,6 +128,10 @@ namespace GStoreServer
             AddOrUpdate(gStoreObjectIdentifier, newValue);
 
             objectLock.ExitWriteLock(lockId);
+
+            string masterId = connectionManager.GetPartitionMasterId(gStoreObjectIdentifier.PartitionId);
+            MastersLocks.TryGetValue(masterId, out ConcurrentDictionary<int, GStoreObjectIdentifier> locks);
+            locks.TryRemove(lockId, out _);
         }
 
         public string GetMaster(string partitionId)
@@ -158,11 +168,40 @@ namespace GStoreServer
             {
                 Console.WriteLine(item.Value);
             }
+
+
         }
 
         public ConnectionManager GetConnectionManager()
         {
             return connectionManager;
+        }
+
+        public void CleanLocks(string masterId)
+        {
+            MastersLocks.TryGetValue(masterId, out ConcurrentDictionary<int, GStoreObjectIdentifier> masterLocks);
+
+            foreach (KeyValuePair<int, GStoreObjectIdentifier> locks in masterLocks)
+            {
+                int lockId = locks.Key;
+                GStoreObjectIdentifier gStoreObjectIdentifier = locks.Value;
+                // fazer unlock e request novo a pedir novo valor
+            }
+
+
+
+        }
+
+        public void ReadMasterLocks()
+        {
+            Console.WriteLine("master locks");
+            foreach (KeyValuePair<string, ConcurrentDictionary<int, GStoreObjectIdentifier>> masterLocks in MastersLocks)
+            {
+                foreach (KeyValuePair<int, GStoreObjectIdentifier> locks in masterLocks.Value)
+                {
+                    Console.WriteLine(locks.Key);
+                }
+            }
         }
     }
 }

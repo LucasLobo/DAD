@@ -1,5 +1,6 @@
 using GStoreServer.Domain;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Utils;
 
@@ -7,11 +8,10 @@ namespace GStoreServer.Controllers
 {
     class WriteReplicaController
     {
-        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, string replicaId, GStoreObject gStoreObject, int lockId)
+        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, MasterReplicaService.MasterReplicaServiceClient stub, GStoreObject gStoreObject)
         {
             WriteRequest writeRequest = new WriteRequest
             {
-                LockId = lockId,
                 Object = new ObjectDto
                 {
                     ObjectIdentifier = new ObjectIdentifierDto
@@ -23,21 +23,23 @@ namespace GStoreServer.Controllers
                 }
             };
 
-            Server replica = connectionManager.GetAliveServer(replicaId);
-            await replica.Stub.WriteAsync(writeRequest);
+            await stub.WriteAsync(writeRequest);
         }
 
-        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject, IDictionary<string, int> replicaLocks)
+        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject)
         {
+
+            GStoreObjectIdentifier gStoreObjectIdentifier = gStoreObject.Identifier;
+
+            // Get all replicas associated to this Partition
+            IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(gStoreObjectIdentifier.PartitionId);
+
             IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
-            foreach(KeyValuePair<string, int> replicaLock in replicaLocks) 
+            foreach (Server replica in replicas)
             {
-                string replicaId = replicaLock.Key;
-                int lockId = replicaLock.Value;
-                writeTasks.Add(replicaId, ExecuteReplicaAsync(connectionManager, replicaId, gStoreObject, lockId));
+                writeTasks.Add(replica.Id, ExecuteReplicaAsync(connectionManager, replica.Stub, gStoreObject));
             }
 
-            // Await lock write requests
             foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)
             {
                 string replicaId = writeTaskPair.Key;

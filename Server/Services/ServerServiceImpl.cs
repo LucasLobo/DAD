@@ -35,29 +35,29 @@ namespace GStoreServer.Services
 
         public override Task<Empty> Write(GStoreWriteRequest request, ServerCallContext context)
         {
-            return ExecuteWrite(request);
+            return Task.FromResult(ExecuteWrite(request));
         }
 
-        private async Task<Empty> ExecuteWrite(GStoreWriteRequest request)
+        private Empty ExecuteWrite(GStoreWriteRequest request)
         {
-            Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier} Value: {request.Object.Value}");
+            Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier.ObjectId} Value: {request.Object.Value}");
 
             GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.Object.ObjectIdentifier.PartitionId, request.Object.ObjectIdentifier.ObjectId);
-            await gStore.Write(gStoreObjectIdentifier, request.Object.Value);
+            gStore.Write(gStoreObjectIdentifier, request.Object.Value);
 
             return new Empty();
         }
 
         public override Task<GStoreListServerReply> ListServer(Empty request, ServerCallContext context)
         {
-            return ExecuteListServer();
+            return Task.FromResult(ExecuteListServer());
         }
 
-        private async Task<GStoreListServerReply> ExecuteListServer()
+        private GStoreListServerReply ExecuteListServer()
         {
             Console.WriteLine($"ListServer request");
 
-            ICollection<GStoreObjectReplica> gStoreObjectReplicas = await gStore.ReadAll();
+            ICollection<GStoreObjectReplica> gStoreObjectReplicas = gStore.ReadAll();
 
             GStoreListServerReply reply = new GStoreListServerReply();
             foreach (GStoreObjectReplica gStoreObjectReplica in gStoreObjectReplicas)

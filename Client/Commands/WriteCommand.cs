@@ -32,20 +32,10 @@ namespace Client.Commands
             string objectId = arguments.ElementAt(1);
             string value = arguments.ElementAt(2);
 
-            try
-            {
-                Console.WriteLine($"Write {partitionId} {objectId} {value}");
-                await WriteController.Execute(ConnectionManager, partitionId, objectId, value);
-                Console.WriteLine("Write success");
-            }
-            catch (ServerBindException e)
-            {
-                Console.WriteLine($"ERROR: {e.Message}");
-            }
-            catch (RpcException ex) when (ex.StatusCode == StatusCode.Internal)
-            {
-                Console.WriteLine($"Could not establish connection with server.");
-            }
+
+            Console.WriteLine($"Write {partitionId} {objectId} {value}");
+            await WriteController.Execute(ConnectionManager, partitionId, objectId, value);
+            Console.WriteLine("Write success");
         }
     }
 }

@@ -123,7 +123,6 @@ namespace GStoreServer.Domain
                     }
                 }
             }
-            if (gStore != null) _ = gStore.CleanLocks(deadServerId);
         }
 
 

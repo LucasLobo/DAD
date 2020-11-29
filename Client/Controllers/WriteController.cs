@@ -1,5 +1,8 @@
 using Client.Domain;
-using System;
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Client.Controllers
@@ -8,34 +11,41 @@ namespace Client.Controllers
     {
         public static async Task Execute(ConnectionManager connectionManager, string partitionId, string objectId, string value)
         {
-            while (true)
+
+            IImmutableSet<Domain.Server> servers = connectionManager.GetAliveServers(partitionId);
+            GStoreWriteRequest writeRequest = new GStoreWriteRequest()
             {
-                Server server = connectionManager.ChooseServerForWrite(partitionId);
-                Console.WriteLine($"Trying: {server.Id}");
-
-                GStoreWriteRequest writeRequest = new GStoreWriteRequest()
+                Object = new DataObject()
                 {
-                    Object = new DataObject()
+                    ObjectIdentifier = new DataObjectIdentifier
                     {
-                        ObjectIdentifier = new DataObjectIdentifier
-                        {
-                            PartitionId = partitionId,
-                            ObjectId = objectId
-                        },
-                        Value = value
-                    }
-                };
+                        PartitionId = partitionId,
+                        ObjectId = objectId
+                    },
+                    Value = value
+                }
+            };
 
+            IDictionary<string, AsyncUnaryCall<Empty>> tasks = new Dictionary<string, AsyncUnaryCall<Empty>>();
+
+            foreach (Domain.Server server in servers)
+            {
+                tasks.Add(server.Id, server.Stub.WriteAsync(writeRequest));
+            }
+
+            foreach (KeyValuePair<string, AsyncUnaryCall<Empty>> taskPair in tasks)
+            {
+                string serverId = taskPair.Key;
+                AsyncUnaryCall<Empty> task = taskPair.Value;
                 try
                 {
-                    await server.Stub.WriteAsync(writeRequest);
-                    return;
+                    await task;
                 }
-                catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
+                catch (RpcException e) when (e.StatusCode == StatusCode.Internal)
                 {
-                    await connectionManager.DeclareDead(server.Id);
+                    await connectionManager.DeclareDead(serverId);
                 }
-            }            
-        }
+            }
+        }            
     }
 }

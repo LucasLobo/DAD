@@ -32,23 +32,60 @@ namespace GStoreServer
             objectLock.EnterWriteLock();
             try
             {
-                GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
-
                 // Send write requests to all replicas
                 if (connectionManager.IsMasterForPartition(gStoreObjectIdentifier.PartitionId))
                 {
+                    GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
                     int version = GetAndIncrementObjectVersionNumber(gStoreObjectIdentifier);
                     _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, writeRequestId, version);
                 }
                 else
                 {
-                    // replica
                     GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
+
+                    bool matched = gStoreObjectVersioning.MatchOperation(writeRequestId);
+                    if (!matched)
+                    {
+                        GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
+                        gStoreObjectVersioning.SetCurrentRequestId(writeRequestId);
+                    }
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+            }
+            finally
+            {
+                objectLock.ExitWriteLock();
+            }
+        }
+
+        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId, int version)
+        {
+            ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
+            objectLock.EnterWriteLock();
+            try
+            {
+                GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
+
+                gStoreObjectVersioning.SetNewestOperation(version, writeRequestId, newValue);
+
+                if (gStoreObjectVersioning.GetCurrentRequestId() == 0)
+                {
+                    AddOrUpdate(gStoreObjectIdentifier, newValue);
+                    gStoreObjectVersioning.SetCurrentRequestId(writeRequestId);
+                }
+
+                if (gStoreObjectVersioning.MatchOperation(writeRequestId) && gStoreObjectVersioning.GetCurrentRequestId() == writeRequestId)
+                {
+                    int newestRequestId = gStoreObjectVersioning.GetNewestRequestId();
+                    string newestValue = gStoreObjectVersioning.GetNewestValue();
+
+                    AddOrUpdate(gStoreObjectIdentifier, newestValue);
+                    gStoreObjectVersioning.SetCurrentRequestId(newestRequestId);
+                }
+                
             }
             finally
             {
@@ -86,7 +123,6 @@ namespace GStoreServer
                 ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
 
                 objectLock.EnterReadLock();
-
                 try
                 {
                     string partitionId = gStoreObject.Identifier.PartitionId;
@@ -99,21 +135,6 @@ namespace GStoreServer
                 }
             }
             return values;
-        }
-
-        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId, int version)
-        {
-            ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
-            objectLock.EnterWriteLock();
-            try
-            {
-                GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
-                AddOrUpdate(gStoreObjectIdentifier, newValue);
-            }
-            finally
-            {
-                objectLock.ExitWriteLock();
-            }
         }
 
         public string GetMaster(string partitionId)

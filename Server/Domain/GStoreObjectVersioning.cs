@@ -6,13 +6,11 @@ namespace GStoreServer.Domain
 {
     class GStoreObjectVersioning
     {
-
-
         private int newestVersion = -1;
         private int newestRequestId;
         private string newestValue;
 
-        private int currentRequestId;
+        private int currentRequestId = 0;
 
         private readonly ISet<int> unmatchedOperations = new HashSet<int>();
 
@@ -22,7 +20,7 @@ namespace GStoreServer.Domain
         {
             if (unmatchedOperations.Contains(requestId))
             {
-                unmatchedOperations.Add(requestId);
+                unmatchedOperations.Remove(requestId);
                 return true;
             }
             else

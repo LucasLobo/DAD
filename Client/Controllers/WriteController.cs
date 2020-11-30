@@ -13,7 +13,7 @@ namespace Client.Controllers
         private static readonly Random random = new Random();
         public static async Task Execute(ConnectionManager connectionManager, string partitionId, string objectId, string value)
         {
-            int id = random.Next(int.MinValue, int.MaxValue);
+            int id = random.Next(1, int.MaxValue);
             Console.WriteLine($"Write PartitionId: {partitionId} ObjectId: {objectId} Value: {value} WriteId: {id}");
 
             IImmutableSet<Domain.Server> servers = connectionManager.GetAliveServers(partitionId);

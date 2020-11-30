@@ -25,9 +25,9 @@ namespace GStoreServer.Services
 
         private Empty ExecuteWrite(WriteRequest request)
         {
-            Console.WriteLine($"Write Replica request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier.ObjectId} Value: {request.Object.Value} WriteId: {request.WriteRequestId}");
+            Console.WriteLine($"Write Replica request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier.ObjectId} Value: {request.Object.Value} WriteId: {request.WriteRequestId} Version: {request.Version}");
             GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.Object.ObjectIdentifier.PartitionId, request.Object.ObjectIdentifier.ObjectId);
-            gStore.WriteReplica(gStoreObjectIdentifier, request.Object.Value, request.WriteRequestId);
+            gStore.WriteReplica(gStoreObjectIdentifier, request.Object.Value, request.WriteRequestId, request.Version);
             return new Empty();
         }
 

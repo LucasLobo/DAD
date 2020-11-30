@@ -12,6 +12,8 @@ namespace GStoreServer
     {
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject> DataStore;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockSlim> ObjectLocks;
+        private readonly ConcurrentDictionary<GStoreObjectIdentifier, int> ObjectVersionNumber;
+        private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectVersioning> ObjectVersionings;
         private readonly ConnectionManager connectionManager;
 
         public GStore(ConnectionManager connectionManager)
@@ -19,6 +21,8 @@ namespace GStoreServer
             this.connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
             DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>();
             ObjectLocks = new ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockSlim>();
+            ObjectVersionNumber = new ConcurrentDictionary<GStoreObjectIdentifier, int>();
+            ObjectVersionings = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectVersioning>();
         }
 
         public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId)
@@ -33,7 +37,13 @@ namespace GStoreServer
                 // Send write requests to all replicas
                 if (connectionManager.IsMasterForPartition(gStoreObjectIdentifier.PartitionId))
                 {
-                    _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, writeRequestId);
+                    int version = GetAndIncrementObjectVersionNumber(gStoreObjectIdentifier);
+                    _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, writeRequestId, version);
+                }
+                else
+                {
+                    // replica
+                    GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
                 }
             }
             catch (Exception e)
@@ -91,12 +101,13 @@ namespace GStoreServer
             return values;
         }
 
-        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId)
+        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId, int version)
         {
             ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
             objectLock.EnterWriteLock();
             try
             {
+                GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
                 AddOrUpdate(gStoreObjectIdentifier, newValue);
             }
             finally
@@ -108,6 +119,30 @@ namespace GStoreServer
         public string GetMaster(string partitionId)
         {
             return connectionManager.GetPartitionMasterId(partitionId);
+        }
+
+        private int GetAndIncrementObjectVersionNumber(GStoreObjectIdentifier gStoreObjectIdentifier)
+        {
+            int version = ObjectVersionNumber.AddOrUpdate(gStoreObjectIdentifier,
+                (key) =>
+                {
+                    return 0;
+                },
+                (key, value) =>
+                {
+                    return ++value;
+                }
+                );
+            return version;
+        }
+
+        private GStoreObjectVersioning GetObjectVersioning(GStoreObjectIdentifier gStoreObjectIdentifier)
+        {
+            return ObjectVersionings.GetOrAdd(gStoreObjectIdentifier,
+                (key) =>
+                {
+                    return new GStoreObjectVersioning();
+                });
         }
 
         private ReaderWriterLockSlim GetObjectLock(GStoreObjectIdentifier gStoreObjectIdentifier)

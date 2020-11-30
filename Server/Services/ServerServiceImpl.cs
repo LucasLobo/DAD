@@ -40,10 +40,10 @@ namespace GStoreServer.Services
 
         private Empty ExecuteWrite(GStoreWriteRequest request)
         {
-            Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier.ObjectId} Value: {request.Object.Value}");
+            Console.WriteLine($"Write request -> PartitionId: {request.Object.ObjectIdentifier.PartitionId} ObjectId: {request.Object.ObjectIdentifier.ObjectId} Value: {request.Object.Value} WriteId: {request.WriteRequestId}");
 
             GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(request.Object.ObjectIdentifier.PartitionId, request.Object.ObjectIdentifier.ObjectId);
-            gStore.Write(gStoreObjectIdentifier, request.Object.Value);
+            gStore.Write(gStoreObjectIdentifier, request.Object.Value, request.WriteRequestId);
 
             return new Empty();
         }

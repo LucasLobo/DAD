@@ -18,7 +18,9 @@ message ObjectDto {
 }
 
 message WriteRequest {
-    ObjectDto object = 2;
+    ObjectDto object = 1;
+    int32 writeRequestId = 2;
+    int32 order = 3;
 }
 
 message HeartBeatRequest {

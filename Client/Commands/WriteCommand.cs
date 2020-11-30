@@ -32,10 +32,7 @@ namespace Client.Commands
             string objectId = arguments.ElementAt(1);
             string value = arguments.ElementAt(2);
 
-
-            Console.WriteLine($"Write {partitionId} {objectId} {value}");
             await WriteController.Execute(ConnectionManager, partitionId, objectId, value);
-            Console.WriteLine("Write success");
         }
     }
 }

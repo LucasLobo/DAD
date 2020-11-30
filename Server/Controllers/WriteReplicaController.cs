@@ -8,7 +8,7 @@ namespace GStoreServer.Controllers
 {
     class WriteReplicaController
     {
-        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, MasterReplicaService.MasterReplicaServiceClient stub, GStoreObject gStoreObject)
+        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, MasterReplicaService.MasterReplicaServiceClient stub, GStoreObject gStoreObject, int writeRequestId)
         {
             WriteRequest writeRequest = new WriteRequest
             {
@@ -20,13 +20,14 @@ namespace GStoreServer.Controllers
                         ObjectId = gStoreObject.Identifier.ObjectId
                     },
                     Value = gStoreObject.Value
-                }
+                },
+                WriteRequestId = writeRequestId
             };
 
             await stub.WriteAsync(writeRequest);
         }
 
-        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject)
+        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject, int writeRequestId)
         {
 
             GStoreObjectIdentifier gStoreObjectIdentifier = gStoreObject.Identifier;
@@ -37,7 +38,7 @@ namespace GStoreServer.Controllers
             IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
             foreach (Server replica in replicas)
             {
-                writeTasks.Add(replica.Id, ExecuteReplicaAsync(connectionManager, replica.Stub, gStoreObject));
+                writeTasks.Add(replica.Id, ExecuteReplicaAsync(connectionManager, replica.Stub, gStoreObject, writeRequestId));
             }
 
             foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)

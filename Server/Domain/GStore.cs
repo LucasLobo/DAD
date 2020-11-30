@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Utils;
 
 namespace GStoreServer
@@ -22,7 +21,7 @@ namespace GStoreServer
             ObjectLocks = new ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockSlim>();
         }
 
-        public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue)
+        public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId)
         {
             // Acquire lock on local object
             ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
@@ -34,7 +33,7 @@ namespace GStoreServer
                 // Send write requests to all replicas
                 if (connectionManager.IsMasterForPartition(gStoreObjectIdentifier.PartitionId))
                 {
-                    _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject);
+                    _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, writeRequestId);
                 }
             }
             catch (Exception e)
@@ -92,7 +91,7 @@ namespace GStoreServer
             return values;
         }
 
-        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue)
+        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId)
         {
             ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
             objectLock.EnterWriteLock();

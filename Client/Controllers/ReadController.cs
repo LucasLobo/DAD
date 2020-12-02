@@ -15,7 +15,7 @@ namespace Client.Controllers
             Server server = null;
             try
             {
-                server = connectionManager.ChooseServerForRead(partitionId, serverId);
+                server = connectionManager.ChooseServer(partitionId, serverId);
                 if (!server.Alive) server = null;
             }
             catch (ServerBindException)
@@ -27,9 +27,10 @@ namespace Client.Controllers
             {
                 if (server == null)
                 {
-                    IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(partitionId);
+                    IImmutableSet<Server> replicas = connectionManager.GetAliveServers(partitionId);
                     Random rnd = new Random();
                     server = replicas.ElementAt(rnd.Next(0, replicas.Count));
+                    connectionManager.Attach(server);
                 }
 
                 Console.WriteLine($"Trying: {server.Id}");

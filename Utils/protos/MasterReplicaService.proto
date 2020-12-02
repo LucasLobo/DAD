@@ -19,7 +19,7 @@ message ObjectDto {
 
 message WriteRequest {
     ObjectDto object = 1;
-    int32 writeRequestId = 2;
+    string server_id = 2;
     int32 version = 3;
 }
 

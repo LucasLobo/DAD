@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using Client.Controllers;
 using System.Threading.Tasks;
+using System.Collections.Immutable;
 
 namespace Client.Domain
 {
@@ -15,7 +16,12 @@ namespace Client.Domain
         {
         }
 
-        public Server ChooseServerForRead(string partitionId, string serverId)
+        public void Attach(Server attachedServer)
+        {
+            this.attachedServer = attachedServer;
+        }
+
+        public Server ChooseServer(string partitionId, string serverId)
         {
             _ = GetPartition(partitionId); // throws exception if partition doesn't exist
 
@@ -38,6 +44,21 @@ namespace Client.Domain
 
             throw new ServerBindException($"No valid attached or default server. Partition: {partitionId} | AttachedServer: ({attachedServer}) | DefaultServer: {serverId}");
             // Choose a valid server if needed
+        }
+
+        public IImmutableSet<Server> GetAliveServers(string partitionId)
+        {
+            Partition partition = GetPartition(partitionId);
+            ImmutableList<string> servers = partition.GetAllServers();
+
+            ISet<Server> aliveServers = new HashSet<Server>();
+            foreach (string serverId in servers)
+            {
+                Server server = GetServer(serverId);
+                if (server.Alive) aliveServers.Add(server);
+            }
+
+            return aliveServers.ToImmutableHashSet();
         }
 
         public new async Task DeclareDead(string deadServerId)

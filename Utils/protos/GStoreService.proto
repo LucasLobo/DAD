@@ -33,7 +33,6 @@ message GStoreReadReply {
 
 message GStoreWriteRequest {
     DataObject object = 1;
-    int32 writeRequestId = 2;
 }
 
 message GStoreListServerReply {

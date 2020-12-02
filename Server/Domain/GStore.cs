@@ -13,6 +13,7 @@ namespace GStoreServer
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject> DataStore;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockSlim> ObjectLocks;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, int> ObjectVersionNumber;
+        private readonly ConcurrentDictionary<GStoreObjectIdentifier, string> ObjectVersionServerWriter;
         private readonly ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectVersioning> ObjectVersionings;
         private readonly ConnectionManager connectionManager;
 
@@ -22,34 +23,23 @@ namespace GStoreServer
             DataStore = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObject>();
             ObjectLocks = new ConcurrentDictionary<GStoreObjectIdentifier, ReaderWriterLockSlim>();
             ObjectVersionNumber = new ConcurrentDictionary<GStoreObjectIdentifier, int>();
+            ObjectVersionServerWriter = new ConcurrentDictionary<GStoreObjectIdentifier, string>();
             ObjectVersionings = new ConcurrentDictionary<GStoreObjectIdentifier, GStoreObjectVersioning>();
         }
 
-        public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId)
+        public void Write(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue)
         {
             // Acquire lock on local object
             ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
             objectLock.EnterWriteLock();
             try
             {
-                // Send write requests to all replicas
-                if (connectionManager.IsMasterForPartition(gStoreObjectIdentifier.PartitionId))
-                {
-                    GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
-                    int version = GetAndIncrementObjectVersionNumber(gStoreObjectIdentifier);
-                    _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, writeRequestId, version);
-                }
-                else
-                {
-                    GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
+                int version = GetAndIncrementObjectVersionNumber(gStoreObjectIdentifier);
+                AddOrUpdateObjectVersionServerWriter(gStoreObjectIdentifier, connectionManager.SelfServerId);
+                GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
 
-                    bool matched = gStoreObjectVersioning.MatchOperation(writeRequestId);
-                    if (!matched)
-                    {
-                        GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
-                        gStoreObjectVersioning.SetCurrentRequestId(writeRequestId);
-                    }
-                }
+                Console.WriteLine("Replicate (gStore)");
+                _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, version);
             }
             catch (Exception e)
             {
@@ -61,31 +51,20 @@ namespace GStoreServer
             }
         }
 
-        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, int writeRequestId, int version)
+        public void WriteReplica(GStoreObjectIdentifier gStoreObjectIdentifier, string newValue, string newServerId, int newVersion)
         {
             ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
             objectLock.EnterWriteLock();
             try
             {
-                GStoreObjectVersioning gStoreObjectVersioning = GetObjectVersioning(gStoreObjectIdentifier);
+                int version = GetObjectVersionNumber(gStoreObjectIdentifier);
+                string serverId = GetObjectVersionServerWriter(gStoreObjectIdentifier);
 
-                gStoreObjectVersioning.SetNewestOperation(version, writeRequestId, newValue);
-
-                if (gStoreObjectVersioning.GetCurrentRequestId() == 0)
+                if (newVersion > version || newVersion == version && string.Compare(newServerId, serverId) < 0)
                 {
-                    AddOrUpdate(gStoreObjectIdentifier, newValue);
-                    gStoreObjectVersioning.SetCurrentRequestId(writeRequestId);
+                    _ = AddOrUpdate(gStoreObjectIdentifier, newValue);
+                    SetObjectVersionNumber(gStoreObjectIdentifier, newVersion);
                 }
-
-                if (gStoreObjectVersioning.MatchOperation(writeRequestId) && gStoreObjectVersioning.GetCurrentRequestId() == writeRequestId)
-                {
-                    int newestRequestId = gStoreObjectVersioning.GetNewestRequestId();
-                    string newestValue = gStoreObjectVersioning.GetNewestValue();
-
-                    AddOrUpdate(gStoreObjectIdentifier, newestValue);
-                    gStoreObjectVersioning.SetCurrentRequestId(newestRequestId);
-                }
-                
             }
             finally
             {
@@ -142,12 +121,36 @@ namespace GStoreServer
             return connectionManager.GetPartitionMasterId(partitionId);
         }
 
+        public int GetObjectVersionNumber(GStoreObjectIdentifier gStoreObjectIdentifier)
+        {
+            int version = ObjectVersionNumber.GetOrAdd(gStoreObjectIdentifier,
+                (key) =>
+                {
+                    return 0;
+                });
+            return version;
+        }
+
+        private void SetObjectVersionNumber(GStoreObjectIdentifier gStoreObjectIdentifier, int version)
+        {
+            _ = ObjectVersionNumber.AddOrUpdate(gStoreObjectIdentifier,
+                (key) =>
+                {
+                    return version;
+                },
+                (key, value) =>
+                {
+                    return version;
+                }
+                );
+        }
+
         private int GetAndIncrementObjectVersionNumber(GStoreObjectIdentifier gStoreObjectIdentifier)
         {
             int version = ObjectVersionNumber.AddOrUpdate(gStoreObjectIdentifier,
                 (key) =>
                 {
-                    return 0;
+                    return 1;
                 },
                 (key, value) =>
                 {
@@ -156,6 +159,27 @@ namespace GStoreServer
                 );
             return version;
         }
+
+
+        private void AddOrUpdateObjectVersionServerWriter(GStoreObjectIdentifier gStoreObjectIdentifier, string serverId)
+        {
+            _ = ObjectVersionServerWriter.AddOrUpdate(gStoreObjectIdentifier,
+                (key) =>
+                {
+                    return serverId;
+                },
+                (key, value) =>
+                {
+                    return serverId;
+                });
+        }
+
+        private string GetObjectVersionServerWriter(GStoreObjectIdentifier gStoreObjectIdentifier)
+        {
+            ObjectVersionServerWriter.TryGetValue(gStoreObjectIdentifier, out string serverId);
+            return serverId;
+        }
+
 
         private GStoreObjectVersioning GetObjectVersioning(GStoreObjectIdentifier gStoreObjectIdentifier)
         {

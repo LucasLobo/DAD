@@ -1,57 +1,64 @@
 using Client.Domain;
-using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
+using Utils;
 
 namespace Client.Controllers
 {
     class WriteController
     {
-        private static readonly Random random = new Random();
         public static async Task Execute(ConnectionManager connectionManager, string partitionId, string objectId, string value)
         {
-            int id = random.Next(1, int.MaxValue);
-            Console.WriteLine($"Write PartitionId: {partitionId} ObjectId: {objectId} Value: {value} WriteId: {id}");
-
-            IImmutableSet<Domain.Server> servers = connectionManager.GetAliveServers(partitionId);
-            GStoreWriteRequest writeRequest = new GStoreWriteRequest()
+            Server server = null;
+            try
             {
-                Object = new DataObject()
-                {
-                    ObjectIdentifier = new DataObjectIdentifier
-                    {
-                        PartitionId = partitionId,
-                        ObjectId = objectId
-                    },
-                    Value = value
-                },
-                WriteRequestId = id
-            };
-
-            IDictionary<string, AsyncUnaryCall<Empty>> tasks = new Dictionary<string, AsyncUnaryCall<Empty>>();
-
-            foreach (Domain.Server server in servers)
+                server = connectionManager.ChooseServer(partitionId, "-1");
+                if (!server.Alive) server = null;
+            }
+            catch (ServerBindException)
             {
-                tasks.Add(server.Id, server.Stub.WriteAsync(writeRequest));
+                // nothing
             }
 
-            foreach (KeyValuePair<string, AsyncUnaryCall<Empty>> taskPair in tasks)
+            Console.WriteLine(server);
+
+            while (true)
             {
-                string serverId = taskPair.Key;
-                AsyncUnaryCall<Empty> task = taskPair.Value;
+                if (server == null)
+                {
+                    IImmutableSet<Server> replicas = connectionManager.GetAliveServers(partitionId);
+                    Random rnd = new Random();
+                    server = replicas.ElementAt(rnd.Next(0, replicas.Count));
+                    connectionManager.Attach(server);
+                }
+
+                Console.WriteLine($"Trying: {server.Id}");
+                GStoreWriteRequest writeRequest = new GStoreWriteRequest()
+                {
+                    Object = new DataObject()
+                    {
+                        ObjectIdentifier = new DataObjectIdentifier
+                        {
+                            PartitionId = partitionId,
+                            ObjectId = objectId
+                        },
+                        Value = value
+                    }
+                };
+
                 try
                 {
-                    await task;
+                    await server.Stub.WriteAsync(writeRequest);
+                    return;
                 }
-                catch (RpcException e) when (e.StatusCode == StatusCode.Internal)
+                catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
                 {
-                    await connectionManager.DeclareDead(serverId);
+                    await connectionManager.DeclareDead(server.Id);
+                    server = null;
                 }
             }
-            Console.WriteLine("Write success");
         }
     }
 }

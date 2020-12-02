@@ -11,7 +11,7 @@ namespace GStoreServer.Domain
 {
     class ConnectionManager : GenericConnectionManager<Server, MasterReplicaService.MasterReplicaServiceClient>
     {
-        private readonly string selfServerId;
+        public string SelfServerId { get; }
 
         // Partitions in which this server is a Master
         private readonly ISet<string> masterPartitions;
@@ -43,7 +43,7 @@ namespace GStoreServer.Domain
             {
                 throw new ArgumentException($"'{selfServerId}' cannot be null or whitespace", nameof(selfServerId));
             }
-            this.selfServerId = selfServerId;
+            this.SelfServerId = selfServerId;
 
             masterPartitions = new HashSet<string>();
             replicaPartitions = new HashSet<string>();
@@ -62,6 +62,23 @@ namespace GStoreServer.Domain
             this.gStore = gStore;
         }
 
+        public IImmutableSet<Server> GetAliveServers(string partitionId)
+        {
+            Partition partition = GetPartition(partitionId);
+            ImmutableList<string> servers = partition.GetAllServers();
+
+            ISet<Server> aliveServers = new HashSet<Server>();
+            foreach (string serverId in servers)
+            {
+                if (serverId != SelfServerId)
+                {
+                    Server server = GetServer(serverId);
+                    if (server.Alive) aliveServers.Add(server);
+                }   
+            }
+
+            return aliveServers.ToImmutableHashSet();
+        }
 
         private ISet<Server> GetReplicasOfPartitionsWhereSelfMaster()
         {
@@ -99,7 +116,7 @@ namespace GStoreServer.Domain
         {
             lock(this)
             {
-                if (deadServerId == selfServerId)
+                if (deadServerId == SelfServerId)
                 {
                     throw new Exception("Self Declared Dead");
                 }
@@ -117,7 +134,7 @@ namespace GStoreServer.Domain
                         {
                             newMasterIndex = (newMasterIndex + 1) % sortedServerIds.Count;
                             newMasterId = sortedServerIds.ElementAt(newMasterIndex);
-                        } while (newMasterId != selfServerId && !GetServer(newMasterId).Alive);
+                        } while (newMasterId != SelfServerId && !GetServer(newMasterId).Alive);
 
                         ElectNewMaster(partition.Id, newMasterId);
                     }
@@ -131,7 +148,7 @@ namespace GStoreServer.Domain
         {
             // vvv Redundant vvv
             Partition partition = GetPartition(partitionId);
-            if (partition.MasterId == selfServerId)
+            if (partition.MasterId == SelfServerId)
             {
                 masterPartitions.Remove(partitionId);
                 replicaPartitions.Add(partitionId);
@@ -141,7 +158,7 @@ namespace GStoreServer.Domain
             base.ElectNewMaster(partitionId, newMasterId);
 
 
-            if (newMasterId == selfServerId)
+            if (newMasterId == SelfServerId)
             {
                 masterPartitions.Add(partitionId);
                 replicaPartitions.Remove(partitionId);
@@ -164,7 +181,7 @@ namespace GStoreServer.Domain
         {
             string toString = base.ToString();
 
-            toString += "\nServerId: " + selfServerId;
+            toString += "\nServerId: " + SelfServerId;
             toString += "\nPartitions where (self) master:";
             foreach(string partition in masterPartitions)
             {
@@ -201,7 +218,7 @@ namespace GStoreServer.Domain
 
             foreach (Server masterServer in GetMastersOfPartitionsWhereSelfReplica())
             {
-                heartbeatTasks.Add(masterServer.Id, HeartbeatController.ExecuteAsync(masterServer.Stub, selfServerId, HEARTBEAT_TIMEOUT));
+                heartbeatTasks.Add(masterServer.Id, HeartbeatController.ExecuteAsync(masterServer.Stub, SelfServerId, HEARTBEAT_TIMEOUT));
             }
 
             foreach (KeyValuePair<string, Task> heartbeatTask in heartbeatTasks)
@@ -276,7 +293,7 @@ namespace GStoreServer.Domain
             if (!useWatchDog) return;
 
             if (!replicasWatchdogs.TryGetValue(replicaId, out Timer timer)) {
-                Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} ResetTimer of nonexisted server - Self: {selfServerId} | Reset: {replicaId} | Replicas: ");
+                Console.WriteLine($"{DateTime.Now:HH:mm:ss tt} ResetTimer of nonexisted server - Self: {SelfServerId} | Reset: {replicaId} | Replicas: ");
                 return;
             }
             ResetTimer(timer);

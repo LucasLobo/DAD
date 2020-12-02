@@ -1,4 +1,5 @@
 using GStoreServer.Domain;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace GStoreServer.Controllers
 {
     class WriteReplicaController
     {
-        private static async Task ExecuteReplicaAsync(ConnectionManager connectionManager, MasterReplicaService.MasterReplicaServiceClient stub, GStoreObject gStoreObject, int writeRequestId, int version)
+        private static async Task ExecuteServerAsync(ConnectionManager connectionManager, MasterReplicaService.MasterReplicaServiceClient stub, GStoreObject gStoreObject, int version)
         {
             WriteRequest writeRequest = new WriteRequest
             {
@@ -21,37 +22,40 @@ namespace GStoreServer.Controllers
                     },
                     Value = gStoreObject.Value
                 },
-                WriteRequestId = writeRequestId,
+                ServerId = connectionManager.SelfServerId,
                 Version = version
             };
 
             await stub.WriteAsync(writeRequest);
         }
 
-        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject, int writeRequestId, int version)
+        public static async Task ExecuteAsync(ConnectionManager connectionManager, GStoreObject gStoreObject, int version)
         {
-
             GStoreObjectIdentifier gStoreObjectIdentifier = gStoreObject.Identifier;
 
             // Get all replicas associated to this Partition
-            IImmutableSet<Server> replicas = connectionManager.GetPartitionAliveReplicas(gStoreObjectIdentifier.PartitionId);
+            IImmutableSet<Server> servers = connectionManager.GetAliveServers(gStoreObjectIdentifier.PartitionId);
 
             IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
-            foreach (Server replica in replicas)
+            foreach (Server server in servers)
             {
-                writeTasks.Add(replica.Id, ExecuteReplicaAsync(connectionManager, replica.Stub, gStoreObject, writeRequestId, version));
+                Console.WriteLine(server.Id);
+                if (server.Id != connectionManager.SelfServerId)
+                {
+                    writeTasks.Add(server.Id, ExecuteServerAsync(connectionManager, server.Stub, gStoreObject, version));
+                }
             }
 
             foreach (KeyValuePair<string, Task> writeTaskPair in writeTasks)
             {
-                string replicaId = writeTaskPair.Key;
+                string serverId = writeTaskPair.Key;
                 try
                 {
                     await writeTaskPair.Value;
                 }
                 catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
                 {
-                    connectionManager.DeclareDead(replicaId);
+                    connectionManager.DeclareDead(serverId);
                 }
             }
         }

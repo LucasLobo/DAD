@@ -38,7 +38,6 @@ namespace GStoreServer
                 AddOrUpdateObjectVersionServerWriter(gStoreObjectIdentifier, connectionManager.SelfServerId);
                 GStoreObject gStoreObject = AddOrUpdate(gStoreObjectIdentifier, newValue);
 
-                Console.WriteLine("Replicate (gStore)");
                 _ = WriteReplicaController.ExecuteAsync(connectionManager, gStoreObject, version);
             }
             catch (Exception e)
@@ -92,21 +91,19 @@ namespace GStoreServer
                       
         }
 
-        public ICollection<GStoreObjectReplica> ReadAll()
+        public ICollection<GStoreObject> ReadAll()
         {
-            ISet<GStoreObjectReplica> values = new HashSet<GStoreObjectReplica>();
-            foreach (KeyValuePair<GStoreObjectIdentifier, GStoreObject> objectPair in DataStore)
+            ISet<GStoreObject> values = new HashSet<GStoreObject>();
+            foreach (KeyValuePair<GStoreObjectIdentifier, ReaderWriterLockSlim> objectPair in ObjectLocks)
             {
                 GStoreObjectIdentifier gStoreObjectIdentifier = objectPair.Key;
-                GStoreObject gStoreObject = objectPair.Value;
-                ReaderWriterLockSlim objectLock = GetObjectLock(gStoreObjectIdentifier);
+                ReaderWriterLockSlim objectLock = objectPair.Value;
 
                 objectLock.EnterReadLock();
                 try
                 {
-                    string partitionId = gStoreObject.Identifier.PartitionId;
-                    GStoreObjectReplica gStoreObjectReplica = new GStoreObjectReplica(gStoreObject, connectionManager.IsMasterForPartition(partitionId));
-                    values.Add(gStoreObjectReplica);
+                    DataStore.TryGetValue(gStoreObjectIdentifier, out GStoreObject gStoreObject);
+                    values.Add(gStoreObject);
                 }
                 finally
                 {
@@ -114,11 +111,6 @@ namespace GStoreServer
                 }
             }
             return values;
-        }
-
-        public string GetMaster(string partitionId)
-        {
-            return connectionManager.GetPartitionMasterId(partitionId);
         }
 
         public int GetObjectVersionNumber(GStoreObjectIdentifier gStoreObjectIdentifier)

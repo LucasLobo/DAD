@@ -10,7 +10,7 @@ namespace Client.Controllers
     class ListServerController
     {
 
-        public static async Task<HashSet<GStoreObjectReplica>> Execute(ConnectionManager connectionManager, string serverId)
+        public static async Task<HashSet<GStoreObject>> Execute(ConnectionManager connectionManager, string serverId)
         {
             try
             {
@@ -18,25 +18,24 @@ namespace Client.Controllers
                 server = connectionManager.GetAliveServer(serverId);
                 GStoreListServerReply gStoreListServerReply = await server.Stub.ListServerAsync(new Google.Protobuf.WellKnownTypes.Empty());
 
-                HashSet<GStoreObjectReplica> gStoreObjectReplicas = new HashSet<GStoreObjectReplica>();
-                foreach (DataObjectReplica dataObjectReplica in gStoreListServerReply.ObjectReplicas)
+                HashSet<GStoreObject> gStoreObjects = new HashSet<GStoreObject>();
+                foreach (DataObject dataObject in gStoreListServerReply.Objects)
                 {
-                    gStoreObjectReplicas.Add(CreateObjectReplica(dataObjectReplica));
+                    gStoreObjects.Add(CreateObject(dataObject));
                 }
-                return gStoreObjectReplicas;
+                return gStoreObjects;
             }
             catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
             {
-                _ = connectionManager.DeclareDead(serverId);
+                connectionManager.DeclareDead(serverId);
                 return null;
             }
         }
 
-        private static GStoreObjectReplica CreateObjectReplica(DataObjectReplica dataObjectReplica)
+        private static GStoreObject CreateObject(DataObject dataObject)
         {
-            GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(dataObjectReplica.Object.ObjectIdentifier.PartitionId, dataObjectReplica.Object.ObjectIdentifier.ObjectId);
-            GStoreObject gStoreObject = new GStoreObject(gStoreObjectIdentifier, dataObjectReplica.Object.Value);
-            return new GStoreObjectReplica(gStoreObject, dataObjectReplica.IsMasterReplica);
+            GStoreObjectIdentifier gStoreObjectIdentifier = new GStoreObjectIdentifier(dataObject.ObjectIdentifier.PartitionId, dataObject.ObjectIdentifier.ObjectId);
+            return new GStoreObject(gStoreObjectIdentifier, dataObject.Value);
         }
     }
 }

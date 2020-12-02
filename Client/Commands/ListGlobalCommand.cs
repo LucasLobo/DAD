@@ -28,29 +28,29 @@ namespace Client.Commands
             }
             Console.WriteLine("listGlobal");
 
-            IDictionary<string, Task<HashSet<GStoreObjectReplica>>> listServerTaskPairs = new Dictionary<string, Task<HashSet<GStoreObjectReplica>>>();
+            IDictionary<string, Task<HashSet<GStoreObject>>> listServerTaskPairs = new Dictionary<string, Task<HashSet<GStoreObject>>>();
 
             foreach (Server server in ConnectionManager.GetAliveServers())
             {
                 listServerTaskPairs.Add(server.Id, ListServerController.Execute(ConnectionManager, server.Id));
             }
 
-            foreach(KeyValuePair<string, Task<HashSet<GStoreObjectReplica>>> listServerTaskPair in listServerTaskPairs)
+            foreach(KeyValuePair<string, Task<HashSet<GStoreObject>>> listServerTaskPair in listServerTaskPairs)
             {
                 string serverId = listServerTaskPair.Key;
-                Task<HashSet<GStoreObjectReplica>> task = listServerTaskPair.Value;
+                Task<HashSet<GStoreObject>> task = listServerTaskPair.Value;
 
-                HashSet<GStoreObjectReplica> gStoreObjectReplicas = await task;
+                HashSet<GStoreObject> gStoreObjects = await task;
 
                 Console.WriteLine($"List Server: {serverId}");
-                if (gStoreObjectReplicas == null)
+                if (gStoreObjects == null)
                 {
                     Console.WriteLine($"=> Server {serverId} crashed.");
                     continue;
                 }
-                foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
+                foreach (GStoreObject gStoreObject in gStoreObjects)
                 {
-                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {(replica.IsMaster ? "Master" : "Replica")}");
+                    Console.WriteLine($"=> {gStoreObject.Identifier.PartitionId}, {gStoreObject.Identifier.ObjectId}, {gStoreObject.Value}");
                 }
             }
         }

@@ -57,41 +57,14 @@ namespace GStoreServer.Services
         {
             Console.WriteLine($"ListServer request");
 
-            ICollection<GStoreObjectReplica> gStoreObjectReplicas = gStore.ReadAll();
+            ICollection<GStoreObject> gStoreObjects = gStore.ReadAll();
 
             GStoreListServerReply reply = new GStoreListServerReply();
-            foreach (GStoreObjectReplica gStoreObjectReplica in gStoreObjectReplicas)
+            foreach (GStoreObject gStoreObject in gStoreObjects)
             {
-                reply.ObjectReplicas.Add(DataObjectReplicaBuilder.FromObjectReplica(gStoreObjectReplica));
+                reply.Objects.Add(DataObjectBuilder.FromString(gStoreObject.Identifier.PartitionId, gStoreObject.Identifier.ObjectId, gStoreObject.Value));
             }
             return reply;
-        }
-
-        public override Task<GStoreGetMasterResponse> GetMaster(GStoreGetMasterRequest request, ServerCallContext context)
-        {
-            return Task.FromResult(ExecuteGetMaster(request));
-        }
-
-        public GStoreGetMasterResponse ExecuteGetMaster(GStoreGetMasterRequest request)
-        {
-            Console.WriteLine($"GetMaster request -> PartitionId: {request.PartitionId}");
-            string masterId;
-            try
-            {
-                masterId = gStore.GetMaster(request.PartitionId);
-            }
-            catch (Exception)
-            {
-                masterId = "-1"; //fixme
-            }
-
-            GStoreGetMasterResponse gStoreGetMasterResponse = new GStoreGetMasterResponse
-            {
-                MasterId = masterId
-            };
-
-            return gStoreGetMasterResponse;
-
         }
 
         class DataObjectIdentifierBuilder
@@ -130,24 +103,6 @@ namespace GStoreServer.Services
                     ObjectIdentifier = objectIdentifier,
                     Value = value
                 };
-            }
-
-        }
-
-        class DataObjectReplicaBuilder
-        {
-            internal static DataObjectReplica FromString(string partitionId, string objectId, string value, bool isMasterReplica)
-            {
-                return new DataObjectReplica
-                {
-                    Object = DataObjectBuilder.FromString(partitionId, objectId, value),
-                    IsMasterReplica = isMasterReplica
-                };
-            }
-
-            internal static DataObjectReplica FromObjectReplica(GStoreObjectReplica gStoreObjectReplica)
-            {
-                return FromString(gStoreObjectReplica.Object.Identifier.PartitionId, gStoreObjectReplica.Object.Identifier.ObjectId, gStoreObjectReplica.Object.Value, gStoreObjectReplica.IsMaster);
             }
         }
     }

@@ -51,7 +51,7 @@ namespace Client.Controllers
                 }
                 catch (Grpc.Core.RpcException e) when (e.StatusCode == Grpc.Core.StatusCode.Internal)
                 {
-                    await connectionManager.DeclareDead(server.Id);
+                    connectionManager.DeclareDead(server.Id);
                     server = null;
                 }
 

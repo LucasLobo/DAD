@@ -34,15 +34,15 @@ namespace Client.Commands
 
             try
             {
-                HashSet<GStoreObjectReplica> gStoreObjectReplicas = await ListServerController.Execute(ConnectionManager, serverId);
-                if (gStoreObjectReplicas == null)
+                HashSet<GStoreObject> gStoreObjects = await ListServerController.Execute(ConnectionManager, serverId);
+                if (gStoreObjects == null)
                 {
                     Console.WriteLine($"=> Server {serverId} crashed.");
                     return;
                 }
-                foreach (GStoreObjectReplica replica in gStoreObjectReplicas)
+                foreach (GStoreObject gStoreObject in gStoreObjects)
                 {
-                    Console.WriteLine($"=> {replica.Object.Identifier.PartitionId}, {replica.Object.Identifier.ObjectId}, {replica.Object.Value}, {(replica.IsMaster ? "Master" : "Replica")}");
+                    Console.WriteLine($"=> {gStoreObject.Identifier.PartitionId}, {gStoreObject.Identifier.ObjectId}, {gStoreObject.Value}");
                 }
             }
             catch (ServerBindException e)

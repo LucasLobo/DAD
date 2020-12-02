@@ -39,7 +39,6 @@ namespace GStoreServer.Controllers
             IDictionary<string, Task> writeTasks = new Dictionary<string, Task>();
             foreach (Server server in servers)
             {
-                Console.WriteLine(server.Id);
                 if (server.Id != connectionManager.SelfServerId)
                 {
                     writeTasks.Add(server.Id, ExecuteServerAsync(connectionManager, server.Stub, gStoreObject, version));

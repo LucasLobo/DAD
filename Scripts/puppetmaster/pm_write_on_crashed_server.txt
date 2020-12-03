@@ -13,8 +13,6 @@ server s-5 http://localhost:8085 0 0
 # HEARTBEAT_INTERVAL = 500;
 # We allow for servers to start and some heartbeat messages to be sent.
 wait 3000
-# We crash server 's-1'. 
+client client1 http://localhost:8090 cl_read_wait_write
+wait 1000
 crash s-1
-wait 7000
-# We start client which will try to write on a dead server.
-client client1 http://localhost:8090 cl_single_write_read

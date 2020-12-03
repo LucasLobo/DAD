@@ -22,8 +22,6 @@ namespace Client.Controllers
                 // nothing
             }
 
-            Console.WriteLine(server);
-
             while (true)
             {
                 if (server == null)

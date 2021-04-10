@@ -10,6 +10,7 @@ The base version of the system takes the master-slave approach and offers linear
 The base version takes the master-slave approach and offers linearizability. Each partition contains one master server, while the remaining servers are replicas. Masters for one partition may be replicas for another, and vice-versa. Distributed locking is used between the masters and the replicas to ensure linearizability. This version compromises write speeds but ensures the data is always consistent. A write request takes six communication steps to complete (i.e., two between the client and the master, and four between the master and the replicas) while a read request takes two (i.e., two between the client and the master). Blocking time in either operation might be significant due to exclusive object locking in write operations.
 
 - Write requests are sent to the master server. The master server will issue object-level write-locks to the replicas. Once a majority is locked, the master server will send the new value to the replicas and unlock them, write its own value and unlock itself.
+- 
 ![image](https://user-images.githubusercontent.com/22732776/114277393-e830a600-9a22-11eb-9435-a472a02a3e41.png)
 
 - Read requests are issued to any server. Read requests will read-lock at the object level. If a lock is granted, the read will be performed and the value will be returned to the client.
@@ -18,6 +19,7 @@ The base version takes the master-slave approach and offers linearizability. Eac
 
 ### Crash Recovery
 The following diagram shows a representation of the crash recovery protocol.
+
 ![image](https://user-images.githubusercontent.com/22732776/114277641-e61b1700-9a23-11eb-80c2-a403ed1bab18.png)
 
 ## Advanced Version - No master (branch)
